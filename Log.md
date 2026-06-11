@@ -547,7 +547,7 @@ package.json              (@wokwi/elements 의존성)
 | 번들 | 핵심 | 파일 |
 |---|---|---|
 | **모듈 입력 파라미터 (Sub-VI connector pane)** | 모듈 본문의 **자유변수**(읽지만 본문에서 안 쓰는 변수)를 자동 검출해 모듈 블록의 value input + 함수 파라미터로 노출. 이름이 유효 식별자라 Python/C/C++/시뮬레이터 codegen 정렬됨. `module_X(gain, raw)` 식 | `lib/blockly/module-store.ts` `detectFreeVars`, `module-blockly.ts`, `walker.ts`, `arduino/stm32.ts` procDef/procCall, `runner.ts` |
-| **상세 호스트 보드 SVG** | RPi 4B(40핀 GPIO 헤더+포트 스택+BCM2711+마운팅홀), Jetson Orin(SoM+히트싱크 핀+NVIDIA 그린+M.2), STM32 Nucleo(ST-LINK+Morpho 헤더+LQFP+LD2/B1) — 인식 가능한 엔지니어링 일러스트(사진은 아님). 그라데이션 PCB | `components/board-illustrations.tsx`, `wiring-canvas.tsx` `BoardArt` |
+| **상세 호스트 보드 SVG (4종 통일)** | RPi 4B(40핀 GPIO 헤더+포트 스택+BCM2711), Jetson Orin(SoM+히트싱크+NVIDIA 그린), STM32 Nucleo(ST-LINK+Morpho+LQFP), Arduino(USB-B+ATmega DIP+크리스탈+RST). **4종 모두 동일한 인라인 SVG 스타일**. (R5의 Wokwi 웹컴포넌트는 foreignObject 밖으로 overflow 깨짐 → 제거, `@wokwi/elements` 의존성도 삭제) | `components/board-illustrations.tsx`, `wiring-canvas.tsx` `BoardArt` |
 | **브레드보드 모드** | 와이어링 캔버스 좌상단 토글. 클래식 솔더리스 브레드보드(±전원 레일 + a–e/f–j 타이포인트 뱅크 + 센터 트렌치 + 컬럼 번호) 표면을 디바이스 아래에 표시. v1은 시각 표면(홀 단위 점퍼 라우팅은 미구현) | `components/breadboard.tsx`, `wiring-canvas.tsx` `showBreadboard` |
 
 ## 30. 모듈 파라미터 메커니즘

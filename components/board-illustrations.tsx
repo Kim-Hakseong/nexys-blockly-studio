@@ -192,9 +192,74 @@ export function Stm32Board({ x, y, w, h }: BoardProps) {
   );
 }
 
+// ============================================================
+//  Arduino (UNO/Mega style) — blue PCB, USB-B, ATmega DIP, headers
+// ============================================================
+export function ArduinoBoard({ x, y, w, h }: BoardProps) {
+  const gx = w / 150, gy = h / 100;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <defs>
+        <linearGradient id="ard-pcb" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2a7cb8" />
+          <stop offset="100%" stopColor="#1c5a86" />
+        </linearGradient>
+      </defs>
+      <g transform={`scale(${gx},${gy})`}>
+        {/* PCB */}
+        <rect x="0" y="0" width="150" height="100" rx="6" fill="url(#ard-pcb)" stroke="#0f3e5e" strokeWidth="1" />
+        {/* mounting holes */}
+        {[[8, 50], [142, 10], [142, 90], [40, 92]].map(([mx, my], i) => (
+          <circle key={i} cx={mx} cy={my} r="2.6" fill="#103a56" stroke="#5aa0cc" strokeWidth="0.7" />
+        ))}
+        {/* USB-B (top-left, silver) */}
+        <rect x="4" y="14" width="20" height="22" rx="1.5" fill="#c0c4cc" stroke="#9094a0" strokeWidth="0.6" />
+        <rect x="6" y="17" width="16" height="16" rx="1" fill="#9aa0aa" />
+        {/* barrel jack (bottom-left, black) */}
+        <rect x="4" y="62" width="22" height="16" rx="3" fill="#0e1418" stroke="#3a4048" strokeWidth="0.6" />
+        {/* top digital header */}
+        <rect x="40" y="3" width="106" height="9" rx="1.5" fill="#0f1115" />
+        {headerPins(43, 5, 18, 1, 5.6, 2.4, '#0f1115')}
+        {Array.from({ length: 18 }).map((_, c) => (
+          <circle key={c} cx={44.2 + c * 5.6} cy={7.4} r="1.3" fill="#2a2e36" stroke="#4a5058" strokeWidth="0.4" />
+        ))}
+        {/* bottom analog/power header */}
+        <rect x="40" y="88" width="106" height="9" rx="1.5" fill="#0f1115" />
+        {Array.from({ length: 18 }).map((_, c) => (
+          <circle key={c} cx={44.2 + c * 5.6} cy={92.4} r="1.3" fill="#2a2e36" stroke="#4a5058" strokeWidth="0.4" />
+        ))}
+        {/* ATmega DIP IC (center) */}
+        <rect x="58" y="38" width="46" height="24" rx="1" fill="#0e1216" stroke="#2a3038" strokeWidth="0.7" />
+        <circle cx="63" cy="43" r="1.6" fill="none" stroke="#6a7078" strokeWidth="0.6" />
+        {/* DIP pin legs */}
+        {Array.from({ length: 14 }).map((_, i) => (
+          <g key={i}>
+            <rect x={60 + i * 3.1} y="35.5" width="1.4" height="2.5" fill="#aab0b8" />
+            <rect x={60 + i * 3.1} y="62" width="1.4" height="2.5" fill="#aab0b8" />
+          </g>
+        ))}
+        <text x="81" y="52" textAnchor="middle" fill="#8a9aa6" fontSize="4.5" fontFamily={MONO}>ATmega</text>
+        {/* 16MHz crystal (silver oval) */}
+        <rect x="44" y="44" width="10" height="14" rx="4" fill="#c8ccd4" stroke="#9094a0" strokeWidth="0.5" />
+        {/* reset button (top-right red) */}
+        <rect x="120" y="20" width="11" height="11" rx="2" fill="#c0392b" stroke="#8a2820" strokeWidth="0.6" />
+        <text x="125.5" y="40" textAnchor="middle" fill="#7fb0d4" fontSize="3.5" fontFamily={MONO}>RST</text>
+        {/* power LED */}
+        <circle cx="112" cy="44" r="2.2" fill="#76b900" opacity="0.85" />
+        {/* silk logo */}
+        <text x="81" y="78" textAnchor="middle" fill="#cfe6f2" fontSize="7" fontFamily={MONO} fontWeight="700" letterSpacing="0.5">
+          ARDUINO
+        </text>
+        <text x="120" y="70" textAnchor="middle" fill="#bfe0f2" fontSize="5" fontFamily={MONO}>UNO</text>
+      </g>
+    </g>
+  );
+}
+
 export function HostBoardIllustration({ targetId, x, y, w, h }: BoardProps & { targetId: string }) {
   if (targetId === 'rpi') return <RpiBoard x={x} y={y} w={w} h={h} />;
   if (targetId === 'jetson') return <JetsonBoard x={x} y={y} w={w} h={h} />;
   if (targetId === 'stm32') return <Stm32Board x={x} y={y} w={w} h={h} />;
+  if (targetId === 'arduino') return <ArduinoBoard x={x} y={y} w={w} h={h} />;
   return null;
 }

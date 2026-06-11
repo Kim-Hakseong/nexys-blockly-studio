@@ -14,7 +14,6 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.4",
-    "@wokwi/elements": "^1.9.2",
     "blockly": "^11.2.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
