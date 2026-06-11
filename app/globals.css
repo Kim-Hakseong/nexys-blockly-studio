@@ -1,0 +1,235 @@
+/* ============================================================
+   Nexys Blockly Studio — Industrial Measurement Tone
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------- design tokens (HSL values, no hsl() wrapper) ----------- */
+/* Dark is the default. Light mode applies via [data-theme="light"]. */
+:root,
+[data-theme='dark'] {
+  /* Page surfaces */
+  --bg:         220 14% 6%;     /* near black with subtle blue */
+  --surface:    220 13% 9%;     /* panel bg */
+  --surface-2:  220 12% 12%;    /* nested elements */
+  --border:     220 10% 18%;    /* 1px borders */
+
+  /* Text */
+  --text:       220 14% 92%;
+  --text-muted: 220 9% 60%;
+
+  /* Signal colors — instrument inspired, muted not vibrant */
+  --signal: 160 64% 45%;    /* online / saved / pass */
+  --warn:   38 92% 50%;     /* deploying / unsaved */
+  --alarm:  0 75% 58%;      /* threshold violated */
+  --info:   213 90% 60%;    /* selected */
+
+  /* Blockly workspace */
+  --workspace: 220 16% 8%;
+  --grid:      220 14% 14%;
+
+  /* internal use — same as text but for SVG cases */
+  --on-signal: 220 14% 6%;
+}
+
+[data-theme='light'] {
+  /* Light instrument tone — clean, panel-white with soft grey nests */
+  --bg:         220 14% 97%;    /* lab paper */
+  --surface:    0 0% 100%;
+  --surface-2:  220 16% 95%;
+  --border:     220 14% 86%;
+
+  --text:       220 25% 14%;
+  --text-muted: 220 12% 42%;
+
+  /* slightly deeper hues for AA contrast on white */
+  --signal: 160 70% 32%;
+  --warn:   28 90% 42%;
+  --alarm:  0 72% 48%;
+  --info:   213 85% 46%;
+
+  --workspace: 220 18% 94%;
+  --grid:      220 14% 88%;
+
+  --on-signal: 0 0% 100%;
+}
+
+/* ----------- base ----------- */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%;
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+#__next, body > div:first-child { height: 100%; }
+
+/* ----------- utility classes ----------- */
+.overline {
+  font-family: 'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--text-muted));
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-feature-settings: 'zero', 'ss01';
+}
+
+/* Subtle grid texture for workspace bg fallback */
+.bg-grid {
+  background-image:
+    linear-gradient(hsl(var(--grid)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--grid)) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Scrollbar — instrument-style, thin and dim */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted) / 0.4); }
+
+/* ----------- Blockly overrides — make it match our theme ----------- */
+.blocklyMainBackground {
+  stroke: none !important;
+  fill: hsl(var(--workspace)) !important;
+}
+
+/* Flyout (panel that opens when a toolbox category is clicked) */
+.blocklyFlyout {
+  /* prevent stray strokes from leaving a vertical line when flyout closes */
+  filter: none !important;
+}
+.blocklyFlyoutBackground {
+  fill: hsl(var(--surface)) !important;
+  fill-opacity: 1 !important;
+  stroke: none !important;
+}
+/* Hide the entire flyout DOM when Blockly marks it hidden — avoids residue.
+   Blockly v11 renders the flyout scrollbar as a SEPARATE SVG element next
+   to the flyout, so visibility:hidden on .blocklyFlyout alone leaves the
+   scrollbar visible on the workspace. Force-hide both. */
+.blocklyFlyout[style*="visibility: hidden"],
+.blocklyFlyout[style*="visibility:hidden"] {
+  display: none !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+/* Scrollbar siblings to a hidden flyout */
+.blocklyFlyout[style*="visibility: hidden"] ~ .blocklyFlyoutScrollbar,
+.blocklyFlyout[style*="visibility:hidden"] ~ .blocklyFlyoutScrollbar,
+.blocklyFlyoutScrollbar[style*="display: none"] {
+  display: none !important;
+}
+/* Generic scrollbar that Blockly orphans on close — match the parent's hidden state */
+.blocklyFlyoutScrollbar.blocklyHidden,
+.blocklyFlyout.blocklyHidden,
+.blocklyFlyout.blocklyHidden ~ .blocklyFlyoutScrollbar {
+  display: none !important;
+}
+
+.blocklyToolboxDiv {
+  background: hsl(var(--surface)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+  padding: 8px 0 !important;
+  /* keep below our top-bar portals (which use a near-max int z-index) */
+  z-index: 20 !important;
+}
+
+/* Blockly's drop-down/widget divs are floating UI; keep them under
+   our top-bar dropdowns and dialogs. */
+.blocklyDropDownDiv, .blocklyWidgetDiv {
+  z-index: 100 !important;
+}
+
+.blocklyTreeRow {
+  font-family: 'IBM Plex Sans Condensed', 'IBM Plex Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: hsl(var(--text-muted)) !important;
+  padding: 8px 16px !important;
+  margin: 1px 0 !important;
+  border-radius: 0 !important;
+}
+
+.blocklyTreeRow:hover {
+  background: hsl(var(--surface-2)) !important;
+}
+
+.blocklyTreeSelected {
+  background: hsl(var(--surface-2)) !important;
+  color: hsl(var(--text)) !important;
+}
+
+.blocklyText {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+.blocklyFlyoutLabelText {
+  font-family: 'IBM Plex Sans Condensed', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  fill: hsl(var(--text-muted)) !important;
+}
+
+/* Block context menu */
+.blocklyWidgetDiv .goog-menu,
+.blocklyWidgetDiv .blocklyMenu {
+  background: hsl(var(--surface)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--text)) !important;
+  font-family: 'IBM Plex Sans', sans-serif !important;
+}
+.blocklyWidgetDiv .blocklyMenuItem {
+  color: hsl(var(--text)) !important;
+}
+.blocklyWidgetDiv .blocklyMenuItemHighlight,
+.blocklyWidgetDiv .blocklyMenuItem:hover {
+  background: hsl(var(--surface-2)) !important;
+}
+
+/* Zoom controls hidden by default in config; if shown, theme them */
+.blocklyZoom > image, .blocklyZoom > svg {
+  opacity: 0.5;
+}
+
+/* Selection rectangle */
+::selection {
+  background: hsl(var(--signal) / 0.3);
+  color: hsl(var(--text));
+}
+
+/* ----------- device animations ----------- */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes spinReverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
