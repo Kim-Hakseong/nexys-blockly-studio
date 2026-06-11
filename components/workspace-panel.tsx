@@ -12,6 +12,7 @@ import type { TargetSpec } from '@/lib/targets/types';
 import {
   addModule, getModules, removeModule, nextModuleId, countBlocks,
   moduleBlockType, moduleIdFromType, subscribe as subscribeModules,
+  detectFreeVars,
   type ModuleDef,
 } from '@/lib/blockly/module-store';
 import {
@@ -384,12 +385,18 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
           }
           if (!bodyState) return null;
 
+          // Free variables (read but not written in the body) become inputs.
+          const freeNames = detectFreeVars(bodyState, (vid) => {
+            try { return ws.getVariableById?.(vid)?.name; } catch { return undefined; }
+          });
+
           const id = nextModuleId();
           const def: ModuleDef = {
             id, name: name.trim() || id,
             bodyState,
             createdAt: new Date().toISOString(),
             blockCount: countBlocks(bodyState),
+            params: freeNames.map(n => ({ name: n })),
           };
 
           // Register the new block type + generator BEFORE we drop an instance.

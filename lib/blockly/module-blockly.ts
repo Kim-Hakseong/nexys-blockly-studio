@@ -22,24 +22,41 @@ export function registerModuleBlock(
 ): void {
   const type = moduleBlockType(def.id);
 
+  const params = def.params ?? [];
+
   Blockly.Blocks[type] = {
     init: function () {
       this.appendDummyInput()
         .appendField('▦')
         .appendField(def.name, 'MOD_LABEL');
+      // one value input per parameter (LabVIEW connector pane)
+      for (const p of params) {
+        this.appendValueInput(`ARG_${p.name}`)
+          .setCheck(null)
+          .setAlign(Blockly.ALIGN_RIGHT)
+          .appendField(p.name);
+      }
+      this.setInputsInline(false);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(MODULE_COLOUR);
       this.setTooltip(
-        `Module "${def.name}" — ${def.blockCount} block(s) combined.\n` +
-        `Double-click (or use Ungroup) to expand its internal blocks for editing.`
+        `Module "${def.name}" — ${def.blockCount} block(s) combined` +
+        (params.length ? `, ${params.length} input(s): ${params.map(p => p.name).join(', ')}` : '') +
+        `.\nUngroup to expand its internal blocks for editing.`
       );
       this.setHelpUrl('');
     },
   };
 
-  // Python: each reuse calls the shared function
-  pythonGenerator.forBlock[type] = () => `${moduleFuncName(def.name)}()\n`;
+  // Python: each reuse calls the shared function with its argument expressions
+  pythonGenerator.forBlock[type] = (b: any) => {
+    const ORDER = pythonGenerator.ORDER;
+    const args = params.map(p =>
+      pythonGenerator.valueToCode(b, `ARG_${p.name}`, ORDER.NONE) || '0'
+    );
+    return `${moduleFuncName(def.name)}(${args.join(', ')})\n`;
+  };
 }
 
 /** Register every known module's block + generator. Call after a module set change. */
@@ -91,7 +108,8 @@ export function generateModuleDefs(Blockly: AnyBlockly, pythonGenerator: AnyGen)
     const indented = body.trim()
       ? body.split('\n').map(l => (l ? '    ' + l : l)).join('\n')
       : '    pass';
-    defs.push(`def ${moduleFuncName(m.name)}() -> None:\n    """Module: ${m.name}"""\n${indented}`);
+    const sig = (m.params ?? []).map(p => p.name).join(', ');
+    defs.push(`def ${moduleFuncName(m.name)}(${sig}) -> None:\n    """Module: ${m.name}"""\n${indented}`);
   }
   return defs.join('\n\n') + '\n\n';
 }

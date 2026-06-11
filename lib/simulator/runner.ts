@@ -414,8 +414,22 @@ export class SimRunner {
         if (modId) {
           const mod = getModules().find(m => m.id === modId);
           if (mod?.bodyState) {
-            this.log('info', `module:${mod.name}`, 'enter');
+            // Bind input args to the free-variable params (by name → id), run
+            // the body, then restore previous values.
+            const params = mod.params ?? [];
+            const restore: Array<[string, any]> = [];
+            for (const p of params) {
+              const varId = this.varIdByName(p.name);
+              const argVal = await this.evalExpression(input(block, `ARG_${p.name}`));
+              if (varId) {
+                restore.push([varId, this.vars.get(varId)]);
+                this.vars.set(varId, argVal);
+              }
+            }
+            this.log('info', `module:${mod.name}`,
+              params.length ? `enter(${params.map(p => p.name).join(', ')})` : 'enter');
             await this.executeBlock(mod.bodyState as BlockJSON);
+            for (const [id, v] of restore) this.vars.set(id, v);
           } else {
             this.log('warn', `module:${modId}`, 'undefined module');
           }
@@ -425,6 +439,15 @@ export class SimRunner {
         await this.evalExpression(block);
       }
     }
+  }
+
+  /** Find a variable id by its (sanitized) name — used to bind module params. */
+  private varIdByName(name: string): string | undefined {
+    for (const [id, nm] of this.varNames) {
+      const san = nm.replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1');
+      if (san === name || nm === name) return id;
+    }
+    return undefined;
   }
 
   private async callProc(block: BlockJSON): Promise<any> {

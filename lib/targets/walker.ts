@@ -52,7 +52,7 @@ export interface Emitter {
   bitResult(verdict: 'PASS' | 'FAIL', valueExpr: string): string;
 
   varSet(name: string, valueExpr: string): string;
-  procCall(name: string): string;
+  procCall(name: string, args?: string[]): string;
 
   ifChannelThen(channel: string, level: 'HIGH' | 'LOW', body: string): string;
 
@@ -75,8 +75,8 @@ export interface Emitter {
   compare(op: string, a: string, b: string): string;
   logicOp(op: string, a: string, b: string): string;
 
-  /** Function definition for user procedures */
-  procDef(name: string, body: string): string;
+  /** Function definition for user procedures / modules (with optional params) */
+  procDef(name: string, body: string, params?: string[]): string;
 
   /** Indent unit — typically '    ' (4 spaces) or '  ' (2 spaces) */
   indent: string;
@@ -121,7 +121,7 @@ export function walkWorkspace(json: WorkspaceJSON, emit: Emitter): string {
   const module_src = getModules().map(m => {
     const bodyBlock = m.bodyState as BlockJSON | undefined;
     const body = walkStatement(bodyBlock, emit, ctx, varNameById);
-    return emit.procDef(moduleFuncName(m.name), body);
+    return emit.procDef(moduleFuncName(m.name), body, (m.params ?? []).map(p => p.name));
   }).join('\n\n');
 
   // Collect loop_every blocks separately so the emitter can schedule them
@@ -239,11 +239,12 @@ function stmt(b: BlockJSON, emit: Emitter, ctx: EmitContext, vn: Map<string, str
     }
 
     default: {
-      // Module (Sub-VI) call block → call the shared function
+      // Module (Sub-VI) call block → call the shared function with args
       const modId = moduleIdFromType(b.type);
       if (modId) {
         const mod = getModules().find(m => m.id === modId);
-        return emit.procCall(moduleFuncName(mod?.name ?? modId));
+        const args = (mod?.params ?? []).map(p => expr(input(b, `ARG_${p.name}`), emit, ctx, vn));
+        return emit.procCall(moduleFuncName(mod?.name ?? modId), args);
       }
       // unknown statement — emit as a comment so output stays informative
       return `// ⚠ unsupported block: ${b.type}`;

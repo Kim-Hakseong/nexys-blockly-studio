@@ -114,9 +114,12 @@ export default function Page() {
   const handleConfirmModule = useCallback((name: string) => {
     const def = wsRef.current?.makeModuleFromSelection(name);
     if (def) {
+      const paramNote = def.params?.length
+        ? ` · 입력 ${def.params.length}개 (${def.params.map(p => p.name).join(', ')})`
+        : '';
       toast.success(`Module "${def.name}" 생성`, {
-        description: `${def.blockCount}개 블록 묶음 · Modules 카테고리에서 재사용`,
-        duration: 2600,
+        description: `${def.blockCount}개 블록 묶음${paramNote} · Modules 카테고리에서 재사용`,
+        duration: 3000,
       });
     } else {
       toast.error('모듈 생성 실패', { description: '선택된 블록을 다시 확인하세요', duration: 2400 });

@@ -536,3 +536,64 @@ package.json              (@wokwi/elements 의존성)
 - ⏸️ Vercel 연결은 사용자가 진행 예정 (가이드 제공됨)
 - 보안(Deployment Protection)은 초기 단계라 보류
 
+---
+
+# Round 6 — 모듈 파라미터 + 상세 보드 + 브레드보드 (2026-06-11)
+
+> R5 후속 3종 순차 진행. 모듈에 입력 단자(I/O), RPi/Jetson/STM32 상세 보드 일러스트, 브레드보드 표면.
+
+## 29. 추가된 능력
+
+| 번들 | 핵심 | 파일 |
+|---|---|---|
+| **모듈 입력 파라미터 (Sub-VI connector pane)** | 모듈 본문의 **자유변수**(읽지만 본문에서 안 쓰는 변수)를 자동 검출해 모듈 블록의 value input + 함수 파라미터로 노출. 이름이 유효 식별자라 Python/C/C++/시뮬레이터 codegen 정렬됨. `module_X(gain, raw)` 식 | `lib/blockly/module-store.ts` `detectFreeVars`, `module-blockly.ts`, `walker.ts`, `arduino/stm32.ts` procDef/procCall, `runner.ts` |
+| **상세 호스트 보드 SVG** | RPi 4B(40핀 GPIO 헤더+포트 스택+BCM2711+마운팅홀), Jetson Orin(SoM+히트싱크 핀+NVIDIA 그린+M.2), STM32 Nucleo(ST-LINK+Morpho 헤더+LQFP+LD2/B1) — 인식 가능한 엔지니어링 일러스트(사진은 아님). 그라데이션 PCB | `components/board-illustrations.tsx`, `wiring-canvas.tsx` `BoardArt` |
+| **브레드보드 모드** | 와이어링 캔버스 좌상단 토글. 클래식 솔더리스 브레드보드(±전원 레일 + a–e/f–j 타이포인트 뱅크 + 센터 트렌치 + 컬럼 번호) 표면을 디바이스 아래에 표시. v1은 시각 표면(홀 단위 점퍼 라우팅은 미구현) | `components/breadboard.tsx`, `wiring-canvas.tsx` `showBreadboard` |
+
+## 30. 모듈 파라미터 메커니즘
+
+- **자유변수 = 입력**: `detectFreeVars(bodyState, resolveName)`가 본문 트리에서 `variables_get`(읽기) − `variables_set`(쓰기) 차집합을 순서대로 추출. 이름은 `sanitizeIdent`로 유효 식별자화 → 함수 파라미터명 == 본문 변수명이라 모든 타겟에서 정렬
+- **블록**: `appendValueInput('ARG_<name>')` per param, 우정렬 라벨
+- **Python**: 호출 `module_X(arg0, arg1)` (블록 제너레이터가 valueToCode), 정의 `def module_X(gain, raw):` (시그니처에 param명)
+- **Walker(C/C++)**: `procDef(name, body, params)` → `void module_X(float gain, float raw)`, `procCall(name, args)` → `module_X(a, b);`
+- **시뮬레이터**: 모듈 호출 시 param명→varId 역참조(`varIdByName`)해서 인자 평가값을 변수에 바인딩, 본문 실행 후 복원
+- **출력**: statement 블록이라 명시적 return은 없음. 모듈이 전역 변수에 쓰면 호출 이후 읽기로 사실상 output (전역 var 스코프 공유)
+
+## 31. 디자인 결정 (R6)
+
+| 결정 | 이유 |
+|---|---|
+| 파라미터 = 자유변수 자동 검출 | 우리 채널 블록은 드롭다운(리터럴)이라 파라미터화 불가. 변수 블록은 value 슬롯에 연결 가능 → 자유변수를 입력으로 승격하는 게 블록 디자인과 정합. 별도 connector-pane UI 없이 동작 |
+| param명 = 유효 식별자 강제 | Blockly Python generator의 변수 sanitize와 어긋나면 본문이 param을 못 읽음. 검출 단계에서 sanitizeIdent로 통일 → 4개 타겟 codegen 일관 |
+| RPi/Jetson/STM32는 손그림 상세 SVG | Wokwi(MIT)에 없음. 사진급은 불가하나 40핀 헤더·포트·SoC 등 아이콘 요소로 인식성 확보. CC-BY-SA(Fritzing)는 상용 배제 |
+| 브레드보드는 v1 시각 표면 | 홀 단위 점퍼 라우팅 엔진은 Tinkercad급 대공사 → 별도 단계. 우선 인식 가능한 브레드보드 표면 + 토글로 미학 제공, 배선은 기존 방식 유지 |
+
+## 32. 알려진 제한 / Phase 7 후보
+
+- 모듈 파라미터는 number/boolean(자유변수)만. 채널 드롭다운 파라미터화, 명시적 출력 단자는 미구현
+- 모듈 본문 편집은 Ungroup→재캡처 — 인-플레이스 편집 미구현
+- 브레드보드는 시각 표면 — 홀 스냅/점퍼선 라우팅 없음 (다음 큰 작업)
+- 상세 보드는 일러스트(사진 아님). 좁은 사이드 패널이라 크기 제약 — 전용 대형 하드웨어 뷰가 있으면 더 큼직하게 가능
+- foreignObject 안 Wokwi 웹컴포넌트(Arduino) 렌더는 브라우저 의존 — 시각 검증 필요
+
+## 33. R6 파일 변경 요약
+
+신규 생성:
+```
+components/board-illustrations.tsx   (RpiBoard/JetsonBoard/Stm32Board)
+components/breadboard.tsx
+```
+
+수정:
+```
+lib/blockly/module-store.ts   (ModuleParam, detectFreeVars, sanitizeIdent)
+lib/blockly/module-blockly.ts (블록 value input per param, 호출 인자, def 시그니처)
+lib/targets/walker.ts         (모듈 def params, call args)
+lib/targets/arduino.ts        (procDef/procCall 파라미터)
+lib/targets/stm32.ts          (procDef/procCall 파라미터)
+lib/simulator/runner.ts       (모듈 param 바인딩, varIdByName)
+components/workspace-panel.tsx (makeModuleFromSelection 자유변수 검출)
+components/wiring-canvas.tsx   (HostBoardIllustration 적용, Breadboard 토글/렌더)
+app/page.tsx                  (모듈 생성 토스트에 param 표시)
+```
+

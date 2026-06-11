@@ -127,7 +127,7 @@ const arduinoEmitter: Emitter = {
     `Serial.print(F("BIT ${v} ="));  Serial.println(${val});`,
 
   varSet: (name, v) => `${name} = ${v};`,
-  procCall: (name) => `${name}();`,
+  procCall: (name, args) => `${name}(${(args ?? []).join(', ')});`,
 
   // ── expressions ──
   aiRead: (ch) =>
@@ -162,8 +162,10 @@ const arduinoEmitter: Emitter = {
   },
   logicOp: (op, a, b) => `((${a}) ${op === 'OR' ? '||' : '&&'} (${b}))`,
 
-  procDef: (name, body) =>
-    `void ${name}() {\n${indentBody(body, INDENT)}\n}`,
+  procDef: (name, body, params) => {
+    const sig = (params ?? []).map(p => `float ${p}`).join(', ');
+    return `void ${name}(${sig}) {\n${indentBody(body, INDENT)}\n}`;
+  },
 };
 
 export function generateArduino(json: WorkspaceJSON): string {

@@ -135,7 +135,7 @@ const stm32Emitter: Emitter = {
     `  HAL_UART_Transmit(&huart2, (uint8_t*)_buf, _n, HAL_MAX_DELAY); }`,
 
   varSet: (name, v) => `${name} = (float)(${v});`,
-  procCall: (name) => `${name}();`,
+  procCall: (name, args) => `${name}(${(args ?? []).join(', ')});`,
 
   // ── expressions ──
   aiRead: (ch) => {
@@ -180,8 +180,11 @@ const stm32Emitter: Emitter = {
   },
   logicOp: (op, a, b) => `((${a}) ${op === 'OR' ? '||' : '&&'} (${b}))`,
 
-  procDef: (name, body) =>
-    `static void ${name}(void) {\n${indentBody(body, INDENT)}\n}`,
+  procDef: (name, body, params) => {
+    const ps = params ?? [];
+    const sig = ps.length ? ps.map(p => `float ${p}`).join(', ') : 'void';
+    return `static void ${name}(${sig}) {\n${indentBody(body, INDENT)}\n}`;
+  },
 };
 
 export function generateStm32(json: WorkspaceJSON): string {

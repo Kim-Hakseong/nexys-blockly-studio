@@ -33,6 +33,9 @@ import {
   Trash2, MousePointer2, ZoomIn, ZoomOut, Maximize2,
 } from 'lucide-react';
 import { WokwiBoard, hasWokwiBoard } from './wokwi-board';
+import { HostBoardIllustration } from './board-illustrations';
+import { Breadboard } from './breadboard';
+import { Grid3x3 } from 'lucide-react';
 
 interface WiringCanvasProps {
   layout: WiringLayout;
@@ -118,6 +121,7 @@ export function WiringCanvas({
   const [drag, setDrag] = useState<DragState>({ kind: 'idle' });
   const [hoverPin, setHoverPin] = useState<string | null>(null);
   const [vb, setVb] = useState(DEFAULT_VB);
+  const [showBreadboard, setShowBreadboard] = useState(false);
 
   // convert client → canvas coords, honoring current viewBox
   const toCanvas = useCallback((clientX: number, clientY: number) => {
@@ -336,6 +340,21 @@ export function WiringCanvas({
 
       {/* SVG canvas (relative for floating controls) */}
       <div className="flex-1 min-h-0 overflow-hidden bg-workspace relative">
+        {/* breadboard toggle — top-left */}
+        <button
+          onClick={() => setShowBreadboard(v => !v)}
+          className={cn(
+            'absolute top-2 left-2 z-10 flex items-center gap-1.5 px-2 py-1 text-[11px] border backdrop-blur-[2px] transition-colors',
+            showBreadboard
+              ? 'bg-signal/15 border-signal/60 text-signal'
+              : 'bg-surface/90 border-border text-text-muted hover:text-text hover:bg-surface-2'
+          )}
+          title="브레드보드 프로토타이핑 표면 표시/숨김"
+        >
+          <Grid3x3 size={12} strokeWidth={1.75} />
+          Breadboard
+        </button>
+
         {/* zoom controls — floating top-right, instrument-style */}
         <div className="absolute top-2 right-2 z-10 flex flex-col bg-surface/90 backdrop-blur-[2px] border border-border">
           <button onClick={zoomIn}    className="p-1.5 text-text-muted hover:text-text hover:bg-surface-2" title="Zoom in">
@@ -380,6 +399,13 @@ export function WiringCanvas({
           <rect id="canvas-grid-rect" x="0" y="0" width={CANVAS_W} height={CANVAS_H} fill="url(#canvasGrid)" />
           {/* generous background pad so panning into empty space works */}
           <rect id="canvas-bg" x="-1000" y="-1000" width="3000" height="3000" fill="transparent" />
+
+          {/* breadboard prototyping surface (under devices) */}
+          {showBreadboard && (
+            <g filter="url(#boardShadow)" style={{ pointerEvents: 'none' }}>
+              <Breadboard x={12} y={CANVAS_H - 138} w={360} h={124} />
+            </g>
+          )}
 
           {/* board */}
           <NexysBoard snapshot={snapshot} hoverPin={hoverPin} targetId={targetId} />
@@ -651,103 +677,21 @@ function BoardArt({ targetId, th }: { targetId: string; th: BoardTheme }) {
     );
   }
 
-  if (targetId === 'rpi') {
+  // Detailed host-board illustration for non-Wokwi targets (RPi/Jetson/STM32).
+  {
+    const foW = BOARD.w - 10;
+    const foH = foW * 0.66;
+    const bx = x0 + 5;
+    const by = top + 12;
     return (
       <g>
-        {/* mounting holes */}
-        {[[x0 + 12, top], [x0 + BOARD.w - 12, top], [x0 + 12, BOARD.y + BOARD.h - 18], [x0 + BOARD.w - 12, BOARD.y + BOARD.h - 18]].map(([mx, my], i) => (
-          <circle key={i} cx={mx} cy={my} r="4" fill="none" stroke={th.sub} strokeWidth="1.2" />
-        ))}
-        {/* Broadcom SoC */}
-        <rect x={cx - 26} y={top + 6} width="52" height="52" rx="2" fill="hsl(0 0% 0% / 0.35)" stroke={th.accent} strokeWidth="0.8" />
-        <text x={cx} y={top + 35} textAnchor="middle" fill={th.sub} fontSize="6" fontFamily={mono}>BCM2711</text>
-        {/* RAM chip */}
-        <rect x={cx - 12} y={top + 64} width="24" height="14" rx="1" fill="hsl(0 0% 0% / 0.3)" stroke={th.sub} strokeWidth="0.6" />
-        {/* USB + ethernet stack at bottom edge */}
-        <rect x={x0 + 14} y={BOARD.y + BOARD.h - 40} width="30" height="20" rx="2" fill="hsl(0 0% 70% / 0.25)" stroke={th.sub} strokeWidth="0.6" />
-        <rect x={x0 + 50} y={BOARD.y + BOARD.h - 40} width="30" height="20" rx="2" fill="hsl(0 0% 70% / 0.25)" stroke={th.sub} strokeWidth="0.6" />
-        <rect x={x0 + 92} y={BOARD.y + BOARD.h - 40} width="34" height="20" rx="2" fill="hsl(45 80% 55% / 0.3)" stroke={th.accent} strokeWidth="0.6" />
-        <text x={x0 + 109} y={BOARD.y + BOARD.h - 27} textAnchor="middle" fill={th.sub} fontSize="4.5" fontFamily={mono}>ETH</text>
+        <text x={cx} y={top + 4} textAnchor="middle" fill={th.sub} fontSize="5.5" fontFamily={mono}>
+          ▸ host board
+        </text>
+        <HostBoardIllustration targetId={targetId} x={bx} y={by} w={foW} h={foH} />
       </g>
     );
   }
-
-  if (targetId === 'jetson') {
-    return (
-      <g>
-        {/* SoM module outline */}
-        <rect x={cx - 34} y={top + 4} width="68" height="60" rx="3" fill="hsl(0 0% 0% / 0.4)" stroke={th.accent} strokeWidth="0.9" />
-        {/* heatsink fins */}
-        {Array.from({ length: 7 }).map((_, i) => (
-          <line key={i} x1={cx - 28 + i * 9} y1={top + 10} x2={cx - 28 + i * 9} y2={top + 58}
-                stroke={th.sub} strokeWidth="1.4" opacity="0.7" />
-        ))}
-        <text x={cx} y={top + 76} textAnchor="middle" fill={th.accent} fontSize="6.5" fontFamily={mono} fontWeight="600">ORIN NX</text>
-        {/* fan */}
-        <circle cx={cx} cy={BOARD.y + BOARD.h - 34} r="16" fill="none" stroke={th.sub} strokeWidth="0.8" />
-        {Array.from({ length: 6 }).map((_, i) => {
-          const a = (i / 6) * Math.PI * 2;
-          return <line key={i} x1={cx} y1={BOARD.y + BOARD.h - 34}
-                       x2={cx + Math.cos(a) * 14} y2={BOARD.y + BOARD.h - 34 + Math.sin(a) * 14}
-                       stroke={th.sub} strokeWidth="1" opacity="0.6">
-            <animateTransform attributeName="transform" type="rotate"
-              from={`0 ${cx} ${BOARD.y + BOARD.h - 34}`} to={`360 ${cx} ${BOARD.y + BOARD.h - 34}`}
-              dur="3s" repeatCount="indefinite" />
-          </line>;
-        })}
-      </g>
-    );
-  }
-
-  if (targetId === 'arduino') {
-    return (
-      <g>
-        {/* USB-B (top-left edge) */}
-        <rect x={x0 + 10} y={top - 2} width="22" height="16" rx="1.5" fill="hsl(0 0% 72% / 0.3)" stroke={th.sub} strokeWidth="0.6" />
-        <text x={x0 + 21} y={top + 8} textAnchor="middle" fill={th.sub} fontSize="4" fontFamily={mono}>USB</text>
-        {/* barrel jack */}
-        <rect x={x0 + 10} y={top + 22} width="20" height="14" rx="3" fill="hsl(0 0% 10% / 0.5)" stroke={th.sub} strokeWidth="0.6" />
-        {/* ATmega DIP IC */}
-        <rect x={cx - 8} y={top + 10} width="40" height="56" rx="1" fill="hsl(0 0% 0% / 0.4)" stroke={th.accent} strokeWidth="0.8" transform={`rotate(0)`} />
-        <circle cx={cx - 3} cy={top + 16} r="2" fill="none" stroke={th.sub} strokeWidth="0.6" />
-        <text x={cx + 12} y={top + 42} textAnchor="middle" fill={th.sub} fontSize="5.5" fontFamily={mono}>ATmega2560</text>
-        {/* pin ticks along IC */}
-        {Array.from({ length: 8 }).map((_, i) => (
-          <line key={i} x1={cx - 8} y1={top + 16 + i * 6.5} x2={cx - 11} y2={top + 16 + i * 6.5} stroke={th.sub} strokeWidth="0.6" />
-        ))}
-        {/* reset button */}
-        <rect x={x0 + BOARD.w - 24} y={top} width="12" height="12" rx="2" fill="hsl(0 60% 50% / 0.4)" stroke={th.sub} strokeWidth="0.6" />
-        <text x={x0 + BOARD.w - 18} y={top + 22} textAnchor="middle" fill={th.sub} fontSize="4" fontFamily={mono}>RST</text>
-      </g>
-    );
-  }
-
-  // stm32 (default)
-  return (
-    <g>
-      {/* ST-Link partition */}
-      <line x1={x0 + 6} y1={top + 2} x2={x0 + BOARD.w - 6} y2={top + 2} stroke={th.sub} strokeWidth="0.6" strokeDasharray="3,2" />
-      <text x={x0 + 10} y={top - 2} fill={th.sub} fontSize="4.5" fontFamily={mono}>ST-LINK</text>
-      {/* mini USB */}
-      <rect x={cx - 9} y={top + 4} width="18" height="12" rx="1.5" fill="hsl(0 0% 72% / 0.3)" stroke={th.sub} strokeWidth="0.6" />
-      {/* LQFP MCU with corner pins */}
-      <rect x={cx - 22} y={top + 24} width="44" height="44" rx="1" fill="hsl(0 0% 0% / 0.4)" stroke={th.accent} strokeWidth="0.8" />
-      <circle cx={cx - 16} cy={top + 30} r="1.5" fill={th.sub} />
-      <text x={cx} y={top + 49} textAnchor="middle" fill={th.sub} fontSize="5.5" fontFamily={mono}>STM32F4</text>
-      {/* pin ticks all 4 sides */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <g key={i}>
-          <line x1={cx - 22} y1={top + 28 + i * 5} x2={cx - 25} y2={top + 28 + i * 5} stroke={th.sub} strokeWidth="0.5" />
-          <line x1={cx + 22} y1={top + 28 + i * 5} x2={cx + 25} y2={top + 28 + i * 5} stroke={th.sub} strokeWidth="0.5" />
-        </g>
-      ))}
-      {/* user LED + button */}
-      <circle cx={x0 + 16} cy={BOARD.y + BOARD.h - 30} r="3" fill={th.accent} opacity="0.7" />
-      <text x={x0 + 22} y={BOARD.y + BOARD.h - 28} fill={th.sub} fontSize="4" fontFamily={mono}>LD2</text>
-      <rect x={x0 + BOARD.w - 26} y={BOARD.y + BOARD.h - 34} width="12" height="12" rx="2" fill="hsl(210 60% 50% / 0.4)" stroke={th.sub} strokeWidth="0.6" />
-      <text x={x0 + BOARD.w - 20} y={BOARD.y + BOARD.h - 36} textAnchor="middle" fill={th.sub} fontSize="4" fontFamily={mono}>B1</text>
-    </g>
-  );
 }
 
 // ================================================================

@@ -11,6 +11,11 @@
  * to drive UI + persistence.
  */
 
+export interface ModuleParam {
+  /** sanitized identifier — used as the function parameter + body variable name */
+  name: string;
+}
+
 export interface ModuleDef {
   id: string;          // 'mod_1'  → block type 'nexys_module_mod_1'
   name: string;        // user label e.g. 'BIT_Pulse'
@@ -19,6 +24,69 @@ export interface ModuleDef {
   createdAt: string;
   /** how many blocks the body contains (for display) */
   blockCount: number;
+  /**
+   * Input parameters (LabVIEW connector pane). Derived from "free variables" —
+   * variables READ in the body but never WRITTEN there. Each becomes a value
+   * input on the module block and a function parameter. Names are valid
+   * identifiers so codegen aligns across Python / C / C++ / simulator.
+   */
+  params: ModuleParam[];
+}
+
+/**
+ * Detect free variables in a serialized module body.
+ * Returns ordered, de-duplicated variable names (read but not written).
+ * `resolveName(id)` maps a Blockly variable id → its name (from the workspace).
+ */
+export function detectFreeVars(
+  bodyState: any,
+  resolveName: (id: string) => string | undefined,
+): string[] {
+  const reads: string[] = [];
+  const writes = new Set<string>();
+
+  const varRef = (field: any): { id: string; name?: string } | null => {
+    if (typeof field === 'string') return { id: field };
+    if (field && typeof field === 'object') return { id: String(field.id ?? ''), name: field.name };
+    return null;
+  };
+
+  const walk = (b: any) => {
+    if (!b) return;
+    if (b.type === 'variables_get') {
+      const v = varRef(b.fields?.VAR);
+      if (v) {
+        const nm = v.name ?? resolveName(v.id) ?? v.id;
+        if (nm) reads.push(sanitizeIdent(nm));
+      }
+    } else if (b.type === 'variables_set') {
+      const v = varRef(b.fields?.VAR);
+      if (v) {
+        const nm = v.name ?? resolveName(v.id) ?? v.id;
+        if (nm) writes.add(sanitizeIdent(nm));
+      }
+    }
+    if (b.inputs) {
+      for (const k of Object.keys(b.inputs)) {
+        const slot = b.inputs[k];
+        if (slot?.block) walk(slot.block);
+        if (slot?.shadow) walk(slot.shadow);
+      }
+    }
+    if (b.next?.block) walk(b.next.block);
+  };
+  walk(bodyState);
+
+  const seen = new Set<string>();
+  const free: string[] = [];
+  for (const r of reads) {
+    if (!writes.has(r) && !seen.has(r)) { seen.add(r); free.push(r); }
+  }
+  return free;
+}
+
+export function sanitizeIdent(name: string): string {
+  return name.replace(/[^A-Za-z0-9_]/g, '_').replace(/^(\d)/, '_$1') || 'arg';
 }
 
 export const MODULE_BLOCK_PREFIX = 'nexys_module_';
