@@ -4,7 +4,8 @@ const nextConfig = {
   // second mount stacks an extra workspace on the container, so every
   // flyout drag/duplicate creates two blocks at the same coordinate.
   reactStrictMode: false,
-  transpilePackages: ['blockly'],
+  // @wokwi/elements + lit ship modern ESM — transpile so Next can bundle them.
+  transpilePackages: ['blockly', '@wokwi/elements', 'lit', 'lit-html', 'lit-element', '@lit/reactive-element'],
 };
 
 export default nextConfig;

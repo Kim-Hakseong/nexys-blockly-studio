@@ -32,6 +32,7 @@ import {
 import {
   Trash2, MousePointer2, ZoomIn, ZoomOut, Maximize2,
 } from 'lucide-react';
+import { WokwiBoard, hasWokwiBoard } from './wokwi-board';
 
 interface WiringCanvasProps {
   layout: WiringLayout;
@@ -625,6 +626,30 @@ function BoardArt({ targetId, th }: { targetId: string; th: BoardTheme }) {
   const cx = BOARD.x + BOARD.w / 2;
   const top = BOARD.y + 224;   // start of art zone
   const mono = "'IBM Plex Mono', monospace";
+
+  // Real board art (MIT Wokwi) where available — shown as the host board the
+  // Nexys shield (the pin header above) mounts onto.
+  if (hasWokwiBoard(targetId)) {
+    const foW = BOARD.w - 14;
+    const foH = foW * 0.74;       // Arduino UNO aspect ≈ 274×201
+    const foX = x0 + 7;
+    const foY = top + 14;
+    return (
+      <g>
+        <text x={cx} y={top + 6} textAnchor="middle" fill={th.sub} fontSize="5.5" fontFamily={mono}>
+          ▸ real host board
+        </text>
+        <foreignObject x={foX} y={foY} width={foW} height={foH} style={{ overflow: 'visible' }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <WokwiBoard targetId={targetId} />
+          </div>
+        </foreignObject>
+        <text x={cx} y={foY + foH + 10} textAnchor="middle" fill={th.accent} fontSize="6" fontFamily={mono} fontWeight="600">
+          Arduino UNO
+        </text>
+      </g>
+    );
+  }
 
   if (targetId === 'rpi') {
     return (

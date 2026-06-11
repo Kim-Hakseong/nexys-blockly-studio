@@ -450,3 +450,89 @@ next.config.mjs, tailwind.config.ts, app/globals.css, app/layout.tsx
 6. **좌측 햄버거** 눌러 사이드바 접으면 워크스페이스 폭 250px 추가 — 큰 블록 다이어그램 풀로 보임
 7. **카테고리 펼쳤다 닫으면 회색 스크롤바 잔상 없음** (MutationObserver 동기화 덕분)
 
+---
+
+# Round 5 — 모듈(Sub-VI) + 실제 보드 아트 + Deploy 호환성/핀맵 (2026-06-11)
+
+> 준 베타테스트를 위해 GitHub public push 완료 (github.com/Kim-Hakseong/nexys-blockly-studio).
+> LabVIEW SubVI 개념(모듈화) + Tinkercad/Wokwi 급 실제 보드 + 타겟 인지 배포까지.
+
+## 23. 추가된 능력
+
+| 번들 | 핵심 | 파일 |
+|---|---|---|
+| **모듈 (Sub-VI) 시스템** | 블록 그룹을 단일 재사용 블록으로 묶기. 싱글톤 레지스트리 + 동적 Blockly 블록 등록 + Modules 동적 카테고리. 코드 생성은 공유 함수 1개(`def/void module_X`) + 호출들 (LabVIEW SubVI 시맨틱). 4개 타겟 전부 + 시뮬레이터 + localStorage 영속화 | `lib/blockly/module-store.ts`, `lib/blockly/module-blockly.ts` |
+| **Make Module / Ungroup UI** | 워크스페이스 좌상단 플로팅 버튼. 블록 선택 → Make Module → 이름 다이얼로그 → 단일 모듈 블록으로 교체. Ungroup으로 내부 블록 복원 | `components/module-dialog.tsx`, `components/workspace-panel.tsx` 핸들 메서드 |
+| **실제 보드 아트 (Wokwi MIT)** | `@wokwi/elements` (MIT) 웹컴포넌트로 진짜 Arduino UNO 보드 렌더. 동적 import로 클라이언트 등록, `<foreignObject>` 안에서 SVG 캔버스와 함께 pan/zoom. "Nexys shield + 실제 호스트 보드" 구조 — 핀 헤더(28핀)는 그대로 두고 그 아래 실제 보드 표시 → 배선 위험 0 | `components/wokwi-board.tsx`, `wiring-canvas.tsx` `BoardArt` |
+| **타겟별 보드 테마** | RPi(녹색)/Jetson(다크+NVIDIA그린)/Arduino(틸→실제 UNO)/STM32(ST블루) 각각 PCB 색·라벨·실크스크린. Wokwi 없는 3종은 고도화된 인라인 SVG (BCM2711/Orin 히트싱크/STM32 LQFP 등) | `wiring-canvas.tsx` `BOARD_THEMES`, `BoardArt` |
+| **Deploy 타겟 호환성** | mock 디바이스에 `targetId` + 5대로 확충 (RPi×2, Jetson, Arduino, STM32). Deploy 다이얼로그: 디바이스 카드에 타겟 뱃지, 활성 타겟≠디바이스 타겟이면 앰버 경고 배너 + Deploy 비활성, 진행 단계·토스트 타겟별(`.ino`/`.c`/`.py`) | `lib/mock-devices.ts`, `lib/types.ts`, `components/deploy-dialog.tsx` |
+| **보드별 핀맵** | 채널→실제 핀 매핑 (RPi `GPIO2`/`MCP3008`, Arduino `D2`/`PWM5`, STM32 `PA0`/`ADC1_IN0`, Jetson `ADS1115`). Deploy 다이얼로그에 접이식 Pin Map 섹션 | `lib/targets/pinmap.ts`, `deploy-dialog.tsx` |
+
+## 24. 모듈 시스템 메커니즘 (핵심 설계)
+
+- **레지스트리** (`module-store.ts`): framework-agnostic 싱글톤 + subscribe. `ModuleDef { id, name, bodyState(Blockly 직렬화), blockCount }`
+- **블록 타입**: `nexys_module_<id>` — statement 블록, 보라색(285), `▦ 이름` 라벨
+- **생성 시점**: 선택 블록을 `Blockly.serialization.blocks.save(sel)`로 캡처 → bodyState → 동적 블록 등록 → 원본 dispose → 같은 위치에 모듈 인스턴스 생성 + 이전 연결 복원
+- **코드 생성**:
+  - Python: 블록 제너레이터가 `module_X()` 호출 emit + `generateModuleDefs()`가 임시 headless 워크스페이스에 bodyState 로드해 `def module_X():` 본문 생성 → preamble 뒤 prepend
+  - Walker(Arduino/STM32): `getModules()`로 각 모듈 bodyState를 `emit.procDef`로 함수화 + 모듈 호출 블록은 `emit.procCall`
+  - 시뮬레이터: 모듈 블록 만나면 bodyState 인라인 실행
+- **영속화 순서 주의**: 복원 시 `setModules()`를 `loadTemplate()` 전에 호출 — 워크스페이스 JSON의 모듈 블록 타입이 로드 전에 등록돼야 함 (subscribe가 동기 재등록)
+
+## 25. 디자인 결정 (R5)
+
+| 결정 | 이유 |
+|---|---|
+| 모듈 = 공유 함수 호출 (인라인 X) | 여러 번 재사용해도 함수 1개. LabVIEW SubVI 그대로. 코드도 깔끔 |
+| 실제 보드를 "Nexys shield + 호스트 보드" 2층 구조로 | 우리 28채널 가상 모델 vs 실제 보드 핀 수 불일치를 해소. 핀 헤더(우리 것)는 그대로 두고 실제 보드는 그 아래 호스트로 표시 → 배선 코드 0 변경, Nexys HAT/실드 제품 컨셉과도 일치 |
+| Wokwi 웹컴포넌트를 foreignObject 안에 | foreignObject는 SVG 좌표계에 속해 캔버스 pan/zoom과 자동 동기화 — 별도 HTML 레이어 sync 불필요 |
+| Wokwi는 Arduino만 적용 | Wokwi elements(MIT)에 RPi/Jetson/STM32 보드 아트 없음. Arduino UNO만 실제, 나머지는 고도화 인라인 SVG. Fritzing 아트는 CC-BY-SA라 상용 부적합으로 배제 |
+| 동적 import로 wokwi 로드 | 메인 번들 영향 0 (별도 chunk). 미로드/미지원 시 stylized fallback |
+| 디바이스에 targetId | Deploy 호환성 체크의 단일 기준. RPi 코드를 STM32 유닛에 보내는 실수 방지 |
+
+## 26. 알려진 제한 / Phase 6 후보
+
+- 실제 보드 아트는 Arduino UNO만 (Wokwi 한정). RPi/Jetson/STM32는 여전히 스타일라이즈드 — 별도 에셋 소싱 필요
+- 모듈은 무인자(파라미터 없음) v1. 입출력 단자(SubVI connector pane)는 미구현
+- 모듈 본문 편집은 Ungroup→재생성 방식 — 더블클릭 인-플레이스 편집 미구현
+- 브레드보드 + 점퍼선 모드(Tinkercad 완전 클론)는 별도 큰 작업으로 보류
+- Wokwi 보드 핀과 우리 기능 핀이 1:1 매핑되진 않음 (호스트 보드는 시각 표시, 배선은 shield 헤더)
+
+## 27. R5 파일 변경 요약
+
+신규 생성:
+```
+lib/blockly/module-store.ts
+lib/blockly/module-blockly.ts
+lib/targets/pinmap.ts
+components/module-dialog.tsx
+components/wokwi-board.tsx
+```
+
+수정:
+```
+app/page.tsx              (모듈 state/dialog/핸들러/영속화, DeployDialog target prop)
+components/workspace-panel.tsx (모듈 등록/카테고리/핸들 메서드, Make Module/Ungroup 플로팅 버튼, moduleDefs emit)
+components/wiring-canvas.tsx (BOARD_THEMES, BoardArt 타겟별 + Wokwi 실제 보드, targetId prop)
+components/hardware-panel.tsx (targetId/targetName prop, 타겟 뱃지)
+components/right-panel.tsx (targetId prop 통과)
+components/deploy-dialog.tsx (target prop, 호환성 배너, Pin Map 섹션)
+components/top-bar.tsx        (R4 TargetMenu — R5 변경 없음, 참고)
+lib/targets/types.ts      (GenerateContext.moduleDefs)
+lib/targets/python.ts     (moduleDefs prepend)
+lib/targets/index.ts      (rpi/jetson generate에 moduleDefs 전달)
+lib/targets/walker.ts     (모듈 def/call emit)
+lib/simulator/runner.ts   (모듈 블록 실행)
+lib/blockly/toolbox.ts    (Modules 동적 카테고리)
+lib/mock-devices.ts       (targetId + 5대 확충)
+lib/types.ts              (Device.targetId)
+next.config.mjs           (@wokwi/elements + lit transpilePackages)
+package.json              (@wokwi/elements 의존성)
+```
+
+## 28. 배포 상태
+
+- ✅ GitHub public: https://github.com/Kim-Hakseong/nexys-blockly-studio (`main`)
+- ⏸️ Vercel 연결은 사용자가 진행 예정 (가이드 제공됨)
+- 보안(Deployment Protection)은 초기 단계라 보류
+
