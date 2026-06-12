@@ -629,3 +629,24 @@ app/page.tsx                  (모듈 생성 토스트에 param 표시)
       components/workspace-panel.tsx (멀티셀렉트), components/top-bar.tsx (로고),
       app/page.tsx (샘플 시드, resolvedTheme 전달), package.json (multiselect 의존성)
 ```
+
+---
+
+# Round 8 — NI 계측 타겟 추가 (2026-06-12)
+
+## 37. NI PXIe / cRIO / cDAQ 타겟
+
+가장 중요한 계측 타겟 3종 추가. 모두 **Python 출력**(NI가 Python 코딩 지원 — nidaqmx).
+
+| 타겟 | id | 코드/프레임워크 | 보드 SVG |
+|---|---|---|---|
+| NI PXIe | `ni_pxie` | Python · nidaqmx (PXIe-1092 + PXIe-6363) | 섀시 + 컨트롤러 슬롯 + 6 주변 모듈 슬롯, 팬 그릴 |
+| NI CompactRIO | `ni_crio` | Python · NI Linux RT (cRIO-9045) | 러기드 컨트롤러(POWER/STATUS/USER/FPGA LED) + C-Series 4모듈 베이 |
+| NI CompactDAQ | `ni_cdaq` | Python · nidaqmx (cDAQ-9178) | 섀시 6슬롯 + USB/ENET 베이스, 스프링 터미널 |
+
+- **Python preamble**: `import nidaqmx` + `nexys.init(target="ni-*", backend="nidaqmx", device=...)`. 본문은 기존 nexys SDK Python 재사용(RPi/Jetson과 동일 패턴) → 모듈/검증/시뮬레이터 그대로 동작
+- **핀맵**: NI-DAQmx 물리 채널 표기 — `PXI1Slot2/ai0`, `cRIO1Mod1/port0/line0`, `cDAQ1Mod1/ao0` 등
+- **디바이스**: NI PXIe Rack / cRIO Field Unit / cDAQ Bench 3대 추가 (deploy 호환성)
+- **보드 테마**: 슬레이트 섀시 + NI 그린 액센트
+
+파일: `lib/targets/python.ts`(NI 변형), `lib/targets/index.ts`(3타겟+`py()` 헬퍼), `lib/targets/pinmap.ts`(`niPin`), `components/board-illustrations.tsx`(NiPxie/NiCrio/NiCdaqBoard), `components/wiring-canvas.tsx`(NI 테마), `lib/mock-devices.ts`(NI 3대)

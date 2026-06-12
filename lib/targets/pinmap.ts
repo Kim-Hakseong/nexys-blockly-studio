@@ -58,7 +58,20 @@ function pinFor(targetId: string, ch: string): PinEntry {
         : { channel: ch, pin: `TIM3_CH${idx}`, note: 'PWM' };
       break;
     }
+    // ── NI targets: NI-DAQmx physical channel strings ──
+    case 'ni_pxie': return niPin('PXI1Slot2', kind, idx);
+    case 'ni_crio': return niPin('cRIO1Mod1', kind, idx);
+    case 'ni_cdaq': return niPin('cDAQ1Mod1', kind, idx);
   }
+  return { channel: ch, pin: '—' };
+}
+
+function niPin(dev: string, kind: string, idx: number): PinEntry {
+  const ch = `${kind}${idx}`;
+  if (kind === 'AI') return { channel: ch, pin: `${dev}/ai${idx}`, note: 'analog in' };
+  if (kind === 'AO') return { channel: ch, pin: `${dev}/ao${idx}`, note: 'analog out' };
+  if (kind === 'DI') return { channel: ch, pin: `${dev}/port0/line${idx}`, note: 'DIO' };
+  if (kind === 'DO') return { channel: ch, pin: `${dev}/port1/line${idx}`, note: 'DIO' };
   return { channel: ch, pin: '—' };
 }
 

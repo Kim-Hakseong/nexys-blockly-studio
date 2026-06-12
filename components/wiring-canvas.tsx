@@ -567,6 +567,25 @@ const BOARD_THEMES: Record<string, BoardTheme> = {
     label: 'STM32 F4 NUCLEO', subtitle: 'Nexys cape',
     pinUnlit: 'hsl(206 22% 24%)', pinStroke: 'hsl(206 30% 36%)',
   },
+  // NI instruments — slate chassis + NI green accent
+  ni_pxie: {
+    pcb: 'hsl(210 12% 17%)', stroke: 'hsl(210 12% 30%)',
+    text: 'hsl(150 24% 84%)', sub: 'hsl(210 10% 60%)', accent: 'hsl(150 45% 58%)',
+    label: 'NI PXIe', subtitle: 'PXIe-1092 · DAQmx',
+    pinUnlit: 'hsl(210 10% 24%)', pinStroke: 'hsl(210 12% 34%)',
+  },
+  ni_crio: {
+    pcb: 'hsl(210 12% 17%)', stroke: 'hsl(210 12% 30%)',
+    text: 'hsl(150 24% 84%)', sub: 'hsl(210 10% 60%)', accent: 'hsl(150 45% 58%)',
+    label: 'NI CompactRIO', subtitle: 'cRIO-9045 · NI Linux RT',
+    pinUnlit: 'hsl(210 10% 24%)', pinStroke: 'hsl(210 12% 34%)',
+  },
+  ni_cdaq: {
+    pcb: 'hsl(210 12% 17%)', stroke: 'hsl(210 12% 30%)',
+    text: 'hsl(150 24% 84%)', sub: 'hsl(210 10% 60%)', accent: 'hsl(150 45% 58%)',
+    label: 'NI CompactDAQ', subtitle: 'cDAQ-9178 · DAQmx',
+    pinUnlit: 'hsl(210 10% 24%)', pinStroke: 'hsl(210 12% 34%)',
+  },
 };
 
 function NexysBoard({

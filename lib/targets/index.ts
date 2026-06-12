@@ -2,11 +2,17 @@
  * Compile target catalog — what hardware the workspace ships to.
  */
 
-import { Cpu, Microscope, Cog, Box } from 'lucide-react';
+import { Cpu, Microscope, Cog, Box, Server, CircuitBoard, Boxes } from 'lucide-react';
 import type { GenerateContext, TargetSpec } from './types';
 import { generatePython } from './python';
 import { generateArduino } from './arduino';
 import { generateStm32 } from './stm32';
+
+const py = (variant: 'rpi' | 'jetson' | 'ni_pxie' | 'ni_crio' | 'ni_cdaq') =>
+  (ctx: GenerateContext) =>
+    ctx.workspace && ctx.pythonGenerator
+      ? generatePython(variant, ctx.workspace, ctx.pythonGenerator, ctx.moduleDefs)
+      : '# (waiting for workspace…)\n';
 
 export const TARGETS: TargetSpec[] = [
   {
@@ -62,6 +68,44 @@ export const TARGETS: TargetSpec[] = [
     icon: Box,
     framework: 'stm32-hal',
     generate: (ctx: GenerateContext) => generateStm32(ctx.workspaceJson),
+  },
+
+  // ── NI (National Instruments) — Python via NI-DAQmx ──
+  {
+    id: 'ni_pxie',
+    name: 'NI PXIe',
+    shortName: 'PXIe',
+    description: 'PXIe-1092 chassis + PXIe-6363 DAQ · Python (nidaqmx)',
+    language: 'python',
+    monacoLang: 'python',
+    fileExt: '.py',
+    icon: Server,
+    framework: 'python · nidaqmx',
+    generate: py('ni_pxie'),
+  },
+  {
+    id: 'ni_crio',
+    name: 'NI CompactRIO',
+    shortName: 'cRIO',
+    description: 'cRIO-9045 + C-Series modules · Python on NI Linux RT',
+    language: 'python',
+    monacoLang: 'python',
+    fileExt: '.py',
+    icon: CircuitBoard,
+    framework: 'python · ni-linux-rt',
+    generate: py('ni_crio'),
+  },
+  {
+    id: 'ni_cdaq',
+    name: 'NI CompactDAQ',
+    shortName: 'cDAQ',
+    description: 'cDAQ-9178 + C-Series modules · Python (nidaqmx)',
+    language: 'python',
+    monacoLang: 'python',
+    fileExt: '.py',
+    icon: Boxes,
+    framework: 'python · nidaqmx',
+    generate: py('ni_cdaq'),
   },
 ];
 

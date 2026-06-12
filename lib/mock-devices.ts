@@ -60,6 +60,40 @@ export const MOCK_DEVICES: Device[] = [
     description: 'Hardware-in-the-Loop 미니 루프 — STM32 F4, 1ms 동기 AI→모델→AO 피드백.',
     targetId: 'stm32',
   },
+  // ── NI instruments ──
+  {
+    id: 'ni-pxie-rack-01',
+    name: 'NI PXIe Rack #1',
+    mode: 'defense',
+    status: 'online',
+    lastSeen: new Date(Date.now() - 4_000).toISOString(),
+    channels: { ai: 8, ao: 4, di: 8, do: 8 },
+    modulesInstalled: ['PXIe-6363 DAQ', 'NI-DAQmx 24.0', 'TDMS Streaming'],
+    description: 'PXIe-1092 섀시 + PXIe-6363 멀티펑션 DAQ. 고속 동기 계측 랙.',
+    targetId: 'ni_pxie',
+  },
+  {
+    id: 'ni-crio-field-01',
+    name: 'NI cRIO Field Unit',
+    mode: 'defense',
+    status: 'online',
+    lastSeen: new Date(Date.now() - 9_000).toISOString(),
+    channels: { ai: 8, ao: 4, di: 8, do: 8 },
+    modulesInstalled: ['cRIO-9045', 'NI-9205 AI', 'NI-9264 AO', 'FPGA Bitfile'],
+    description: 'CompactRIO 야전 제어기 — NI Linux RT + FPGA, C-Series 모듈.',
+    targetId: 'ni_crio',
+  },
+  {
+    id: 'ni-cdaq-bench-01',
+    name: 'NI cDAQ Bench',
+    mode: 'defense',
+    status: 'online',
+    lastSeen: new Date(Date.now() - 20_000).toISOString(),
+    channels: { ai: 8, ao: 4, di: 8, do: 8 },
+    modulesInstalled: ['cDAQ-9178', 'NI-9213 TC', 'NI-9476 DO'],
+    description: 'CompactDAQ 벤치탑 — USB 섀시 + C-Series, 시험실 계측용.',
+    targetId: 'ni_cdaq',
+  },
 ];
 
 export function findDeviceById(id: string): Device | undefined {
