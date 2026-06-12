@@ -23,7 +23,7 @@
   --text-muted: 220 9% 60%;
 
   /* Signal colors — instrument inspired, muted not vibrant */
-  --signal: 160 64% 45%;    /* online / saved / pass */
+  --signal: 355 100% 45%;   /* point color #E60012 — accent / active / online */
   --warn:   38 92% 50%;     /* deploying / unsaved */
   --alarm:  0 75% 58%;      /* threshold violated */
   --info:   213 90% 60%;    /* selected */
@@ -47,7 +47,7 @@
   --text-muted: 220 12% 42%;
 
   /* slightly deeper hues for AA contrast on white */
-  --signal: 160 70% 32%;
+  --signal: 354 92% 43%;    /* point color #E60012 (light-mode tuned) */
   --warn:   28 90% 42%;
   --alarm:  0 72% 48%;
   --info:   213 85% 46%;

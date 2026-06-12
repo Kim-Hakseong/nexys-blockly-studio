@@ -91,8 +91,11 @@ const PIN_BY_CHANNEL: Record<string, PinPos> = BOARD_PINS.reduce(
   (acc, p) => { acc[p.channel] = p; return acc; }, {} as Record<string, PinPos>
 );
 
+// Wires + channel pins keep the original instrument green, independent of the
+// app's point color (--signal, now red). Decoupled on purpose per design.
+const WIRE_GREEN = 'hsl(160 64% 45%)';
 const KIND_COLOR: Record<ChannelKind, string> = {
-  do: 'hsl(var(--signal))',
+  do: WIRE_GREEN,
   di: 'hsl(var(--info))',
   ai: 'hsl(160 50% 50%)',
   ao: 'hsl(213 90% 60%)',
@@ -472,10 +475,10 @@ export function WiringCanvas({
                 <circle
                   cx={pin.x} cy={pin.y} r={PIN_R}
                   fill={wired
-                    ? (spec.kind === 'do' || spec.kind === 'ai' ? 'hsl(var(--signal))' : 'hsl(var(--info))')
+                    ? (spec.kind === 'do' || spec.kind === 'ai' ? WIRE_GREEN : 'hsl(var(--info))')
                     : 'hsl(var(--surface))'}
                   stroke={wired
-                    ? (spec.kind === 'do' || spec.kind === 'ai' ? 'hsl(var(--signal))' : 'hsl(var(--info))')
+                    ? (spec.kind === 'do' || spec.kind === 'ai' ? WIRE_GREEN : 'hsl(var(--info))')
                     : 'hsl(var(--text-muted))'}
                   strokeWidth="1.4"
                   onPointerDown={(e) => startWire(e, dev)}

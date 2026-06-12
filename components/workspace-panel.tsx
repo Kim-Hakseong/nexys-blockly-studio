@@ -55,6 +55,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
     const emitRef = useRef<() => void>(() => {});
     const moRef = useRef<MutationObserver | null>(null);
     const moduleUnsubRef = useRef<(() => void) | null>(null);
+    const multiselectRef = useRef<any>(null);
     const onCodeChangeRef = useRef(onCodeChange);
     const onWorkspaceChangeRef = useRef(onWorkspaceChange);
     const onReadyRef = useRef(onReady);
@@ -110,6 +111,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
           generatorModule,
           themeModule,
           initialWsModule,
+          multiselectModule,
         ] = await Promise.all([
           import('blockly'),
           import('blockly/python'),
@@ -118,6 +120,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
           import('@/lib/blockly/python-generator'),
           import('@/lib/blockly/theme'),
           import('@/lib/blockly/initial-workspace'),
+          import('@mit-app-inventor/blockly-plugin-workspace-multiselect'),
         ]);
 
         if (disposed || !containerRef.current) return;
@@ -185,6 +188,25 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
         // Dynamic Modules toolbox category — lists every defined module as a
         // draggable block. Re-evaluated each time the category opens.
         workspace.registerToolboxCategoryCallback('MODULES', () => buildModuleFlyout());
+
+        // Multi-select: Shift/Ctrl-click to select & drag multiple blocks.
+        try {
+          const { Multiselect } = multiselectModule as any;
+          const msOptions = {
+            useDoubleClick: false,
+            bumpNeighbours: false,
+            multiFieldUpdate: true,
+            workspaceAutoFocus: true,
+            multiselectIcon: { hideIcon: true, weight: 3 },
+            multiSelectKeys: ['Shift', 'Control', 'Meta'],
+            multiselectCopyPaste: { crossTab: true, menu: true },
+          };
+          const ms = new Multiselect(workspace);
+          ms.init(msOptions);
+          multiselectRef.current = ms;
+        } catch (err) {
+          console.warn('[nexys] multiselect init failed', err);
+        }
 
         // Load BIT demo sequence so first impression is strong
         try {
@@ -308,6 +330,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
 
       return () => {
         disposed = true;
+        try { multiselectRef.current?.dispose?.(); multiselectRef.current = null; } catch { /* ignore */ }
         try { moduleUnsubRef.current?.(); moduleUnsubRef.current = null; } catch { /* ignore */ }
         try {
           moRef.current?.disconnect();

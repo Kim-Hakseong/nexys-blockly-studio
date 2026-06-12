@@ -27,6 +27,7 @@ import { TARGETS, DEFAULT_TARGET_ID, findTarget } from '@/lib/targets';
 import {
   getModules, setModules, subscribe as subscribeModules, type ModuleDef,
 } from '@/lib/blockly/module-store';
+import { SAMPLE_MODULES } from '@/lib/blockly/sample-modules';
 
 const WELCOME_KEY = 'nexys.welcome.dismissed.v1';
 const SAVE_KEY = 'nexys.workspace.v1';
@@ -94,6 +95,9 @@ export default function Page() {
   const [pendingModuleBlockCount, setPendingModuleBlockCount] = useState(0);
   useEffect(() => {
     const unsub = subscribeModules(() => setModuleList(getModules()));
+    // Seed sample modules so the Modules category isn't empty on first load.
+    // A restored session with its own modules overrides these in onReady.
+    if (getModules().length === 0) setModules(SAMPLE_MODULES);
     return () => { unsub(); };
   }, []);
 
@@ -330,6 +334,7 @@ export default function Page() {
         targets={TARGETS}
         activeTargetId={activeTargetId}
         themeMode={themeMode}
+        resolvedTheme={themeResolved}
         onSave={handleSave}
         onDeploy={() => setDeployOpen(true)}
         onRun={handleRun}

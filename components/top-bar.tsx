@@ -20,6 +20,7 @@ interface TopBarProps {
   targets: TargetSpec[];
   activeTargetId: string;
   themeMode: ThemeMode;
+  resolvedTheme: 'light' | 'dark';
   onSave: () => void;
   onDeploy: () => void;
   onRun: () => void;
@@ -39,6 +40,7 @@ export function TopBar({
   targets,
   activeTargetId,
   themeMode,
+  resolvedTheme,
   onSave,
   onDeploy,
   onRun,
@@ -52,8 +54,14 @@ export function TopBar({
     <header className="h-14 border-b border-border bg-surface px-4 flex items-center justify-between shrink-0 relative z-30">
       {/* Left: brand + templates */}
       <div className="flex items-center gap-4 min-w-[280px]">
-        <div className="flex items-baseline gap-2">
-          <span className="mono font-semibold text-text tracking-tight text-base">Nexys</span>
+        <div className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={resolvedTheme === 'light' ? '/logo-light.png' : '/logo-dark.png'}
+            alt="Nexys"
+            className="h-5 w-auto select-none"
+            draggable={false}
+          />
           <span className="text-text-muted text-sm">· Blockly Studio</span>
         </div>
         <span className="h-5 w-px bg-border" />

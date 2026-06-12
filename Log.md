@@ -597,3 +597,35 @@ components/wiring-canvas.tsx   (HostBoardIllustration 적용, Breadboard 토글/
 app/page.tsx                  (모듈 생성 토스트에 param 표시)
 ```
 
+
+---
+
+# Round 7 — 포인트 컬러 + 멀티셀렉트 + 샘플 모듈 + 로고 (2026-06-12)
+
+## 34. 변경 내역
+
+| 항목 | 내용 | 파일 |
+|---|---|---|
+| **포인트 컬러 #E60012(빨강)** | `--signal` 토큰을 초록(#29BC8B 계열)→빨강 #E60012로 변경 (dark `355 100% 45%`, light `354 92% 43%`). 버튼·탭·LED·액센트 전부 빨강화. **와이어/채널 핀은 초록 유지** — wiring-canvas에서 `WIRE_GREEN` 상수로 `--signal` 의존 분리 (KIND_COLOR.do + device 핀 nub) | `app/globals.css`, `components/wiring-canvas.tsx` |
+| **블록 다중 선택** | `@mit-app-inventor/blockly-plugin-workspace-multiselect` (blockly >=11 호환) 도입. Shift/Ctrl/Meta + 클릭으로 여러 블록 선택·드래그. inject 후 `new Multiselect(ws).init(opts)`, cleanup에서 dispose. 온캔버스 아이콘은 숨김(키 조작만) | `components/workspace-panel.tsx`, `types/multiselect.d.ts` (ambient 선언) |
+| **샘플 모듈 4종** | Modules 카테고리 비어있던 것 → 첫 로드 시 시드: BIT_Pulse(DO0 펄스), LogScaled(입력 raw·스케일 로깅), HotAlarm(열전대>30°C 알람), BitCheck(AI0 판정+로깅). 저장된 모듈 있으면 그것이 우선 | `lib/blockly/sample-modules.ts`, `app/page.tsx` 시드 |
+| **메인 로고 (테마별)** | 좌상단 "Nexys" 텍스트 → 실제 NXS/NEXYS 로고 이미지. 라이트=`logo-light.png`(image001.png, 컬러), 다크=`logo-dark.png`(흰색버전). `resolvedTheme`로 스왑 | `etc/*.png`→`public/logo-{light,dark}.png`, `components/top-bar.tsx`, `app/page.tsx` |
+
+## 35. 디자인 결정 (R7)
+
+| 결정 | 이유 |
+|---|---|
+| 와이어 초록을 `--signal`에서 분리(WIRE_GREEN 상수) | 포인트 컬러는 빨강이지만 배선 가독성/계측 관습상 신호선은 초록 유지가 명확. 토큰을 빨강으로 바꿔도 와이어/핀은 영향 없게 하드코딩 |
+| 빨강 버튼에 어두운 텍스트(text-bg) 유지 | #E60012 대비: 검정 텍스트 대비 5.2 > 흰색 4.0 → 기존 text-bg(어두움)가 오히려 가독성 우수, 변경 불필요 |
+| 멀티셀렉트는 MIT App Inventor 포크 | 공식 `@blockly/*` 네임스페이스엔 multiselect 없음. MIT 포크가 blockly 11 peer 지원 + dragger 불필요 버전이라 inject 간섭 최소 |
+| 샘플 모듈 시드는 "모듈 0개일 때만" | 사용자가 만든 모듈/복원 세션을 덮지 않음. 빈 카테고리의 첫인상만 채움 |
+| 로고는 `<img>` 테마 스왑 | next/image보다 단순, 작은 PNG라 최적화 불필요. resolvedTheme로 라이트/다크 분기 |
+
+## 36. R7 파일 변경 요약
+```
+신규: lib/blockly/sample-modules.ts, types/multiselect.d.ts,
+      public/logo-light.png, public/logo-dark.png
+수정: app/globals.css (--signal 빨강), components/wiring-canvas.tsx (WIRE_GREEN 분리),
+      components/workspace-panel.tsx (멀티셀렉트), components/top-bar.tsx (로고),
+      app/page.tsx (샘플 시드, resolvedTheme 전달), package.json (multiselect 의존성)
+```
