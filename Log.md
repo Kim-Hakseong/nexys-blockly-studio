@@ -1,3 +1,38 @@
+---
+project: Nexys Blockly Studio
+stage: 베타
+progress: 70
+repo_url: https://github.com/Kim-Hakseong/nexys-blockly-studio
+demo_url: ""
+summary: 디펜스/항공우주 엔지니어용 웹 기반 비주얼 프로그래밍 IDE (Google Blockly) — 멀티타겟 펌웨어/계측 코드 생성
+---
+
+## 마일스톤
+- [x] Blockly 코어 통합
+- [x] 블록 카테고리 정의
+- [x] 멀티-타겟 펌웨어 (Arduino / ESP32 / Raspberry Pi)
+- [x] 모듈(Sub-VI) 시스템 + 파라미터(I/O)
+- [x] NI 계측 타겟 (PXIe / cRIO / cDAQ)
+- [ ] 외부 배포 (Vercel) 연결
+- [ ] LabVIEW/PLC 엔지니어 대상 사내 데모
+
+## 2026-06-12
+- Round 8: NI PXIe / cRIO / cDAQ 계측 타겟 추가
+- Round 7: 포인트 컬러 + 멀티셀렉트 + 샘플 모듈 + 로고
+
+## 2026-06-11
+- Round 5~6: 모듈(Sub-VI) 시스템 + 모듈 파라미터, 상세 보드 아트 + 브레드보드
+
+## 2026-06-09
+- Round 4: 멀티-타겟 펌웨어 + 템플릿/와이어링 연동
+
+## 2026-06-08
+- Round 2~3: Post-MVP 고도화 + 제품화 단계 폴리시
+
+---
+
+<!-- 위 블록은 dev-dashboard(SSOT) 집계용. 아래는 원본 빌드 로그 -->
+
 # Build Log — Nexys Blockly Studio (Defense MVP)
 
 > Claude Code 빌드 세션 로그. 2026-05-17.
