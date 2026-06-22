@@ -3,7 +3,7 @@ project: Nexys Blockly Studio
 stage: 베타
 progress: 70
 repo_url: https://github.com/Kim-Hakseong/nexys-blockly-studio
-demo_url: ""
+demo_url: https://nexys-blockly-studio.vercel.app/
 summary: 디펜스/항공우주 엔지니어용 웹 기반 비주얼 프로그래밍 IDE (Google Blockly) — 멀티타겟 펌웨어/계측 코드 생성
 ---
 
