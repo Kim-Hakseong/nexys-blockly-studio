@@ -18,6 +18,15 @@ class TcpTransport:
         return cls(socket.create_connection((host, port), timeout=timeout))
 
     @classmethod
+    def server(cls, port: int, host: str = "0.0.0.0", backlog: int = 1) -> "TcpServer":
+        """Listen on a real interface for an incoming connection."""
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        srv.bind((host, port))
+        srv.listen(backlog)
+        return TcpServer(srv)
+
+    @classmethod
     def loopback(cls) -> "TcpTransport":
         """Spin up a tiny echo server on localhost and connect to it."""
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -71,3 +80,26 @@ class TcpTransport:
                     s.close()
                 except OSError:
                     pass
+
+
+class TcpServer:
+    """A listening TCP socket; ``accept()`` yields a TcpTransport per client."""
+
+    def __init__(self, srv: socket.socket) -> None:
+        self.srv = srv
+
+    @property
+    def address(self):
+        return self.srv.getsockname()
+
+    def accept(self, timeout: float | None = None):
+        if timeout is not None:
+            self.srv.settimeout(timeout)
+        conn, addr = self.srv.accept()
+        return TcpTransport(conn), addr
+
+    def close(self) -> None:
+        try:
+            self.srv.close()
+        except OSError:
+            pass

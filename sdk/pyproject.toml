@@ -19,5 +19,8 @@ serial = ["pyserial>=3.5"]           # real serial ports (loopback BIT is stdlib
 read = ["npTDMS>=1.6"]               # to read produced .tdms files
 dev = ["pytest>=7", "npTDMS>=1.6"]
 
+[project.scripts]
+nexys-netcheck = "nexys.netcheck:main"
+
 [tool.setuptools.packages.find]
 include = ["nexys*"]

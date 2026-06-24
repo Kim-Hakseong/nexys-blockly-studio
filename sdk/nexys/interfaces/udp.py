@@ -22,6 +22,22 @@ class UdpTransport:
         t.peer = t.sock.getsockname()
         return t
 
+    @classmethod
+    def server(cls, port: int, host: str = "0.0.0.0") -> "UdpTransport":
+        """Bind to a real interface to receive datagrams from the network.
+
+        host '0.0.0.0' accepts on every interface (incl. the Ethernet port).
+        """
+        return cls(bind=(host, port))
+
+    def recvfrom(self, bufsize: int = 65535, timeout: float = 1.0):
+        """Receive a datagram, returning (data, (src_ip, src_port))."""
+        self.sock.settimeout(timeout)
+        try:
+            return self.sock.recvfrom(bufsize)
+        except socket.timeout:
+            return b"", None
+
     def send(self, data: bytes) -> int:
         return self.sock.sendto(bytes(data), self.peer)
 

@@ -8,7 +8,7 @@ Each transport exposes send/recv/close and a ``loopback()`` (or
 from __future__ import annotations
 
 from .base import Transport
-from .tcp import TcpTransport
+from .tcp import TcpServer, TcpTransport
 from .udp import UdpTransport
 from .serial import PtySerialLoopback, SerialTransport
 
@@ -16,6 +16,7 @@ __all__ = [
     "Transport",
     "UdpTransport",
     "TcpTransport",
+    "TcpServer",
     "SerialTransport",
     "PtySerialLoopback",
 ]

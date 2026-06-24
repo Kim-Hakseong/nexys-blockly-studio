@@ -92,6 +92,39 @@ nexys BIT self-test
 CI or a pre-deploy gate. Real serial ports use pyserial (`pip install
 nexys-sdk[serial]`); the loopback BIT itself is pure stdlib (pseudo-terminal).
 
+## Check a real Ethernet link (two machines)
+
+Confirm values actually arrive over a physical cable from another PC / device.
+Run the listener on the receiving PC and the sender on the other — both ends
+use real sockets bound to `0.0.0.0`, so this is the genuine network path.
+
+```bash
+# receiving PC — prints its own IP addresses, then every value it gets:
+python -m nexys.netcheck listen --proto udp --port 5005
+
+# other PC / device — point at the listener's IP:
+python -m nexys.netcheck send --proto udp --host 192.168.0.10 --port 5005 \
+    --count 100 --hz 20 --pattern sine
+
+python -m nexys.netcheck ips      # list this host's IPv4 addresses
+```
+
+Listener output (source IP, sequence, value, latency, packet loss):
+
+```
+[nexys] listening UDP on 0.0.0.0:5005
+[nexys] this host's addresses: 127.0.0.1, 192.168.45.240
+#1     from 192.168.45.240:49842  seq=0   value=2.5000   ~0.3 ms
+#2     from 192.168.45.240:49842  seq=1   value=3.1180   ~0.2 ms
+...
+[nexys] received 100 packets in 5.01s (20.0/s), lost 0, value range [0.5, 4.5]
+```
+
+`--proto tcp` works the same way. The wire format is one ASCII line per sample
+(`NEXYS,<seq>,<unix_time>,<value>\n`) so a microcontroller or any device can emit
+it directly; unrecognized bytes are still printed raw, so *any* incoming data is
+visible. (Open the listener's port in the OS firewall if packets don't arrive.)
+
 ## API surface (what the generator emits)
 
 ```

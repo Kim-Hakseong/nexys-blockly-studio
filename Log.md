@@ -815,3 +815,25 @@ pty 시리얼 루프백, selftest 전체 PASS. 데모 실행 시 4/4 PASS.
 파일: `sdk/nexys/interfaces/*`(신규), `sdk/nexys/selftest.py`(신규),
 `sdk/nexys/__init__.py`, `sdk/examples/selftest_demo.py`, `sdk/tests/test_interfaces.py`,
 `sdk/pyproject.toml`(serial extra), `sdk/README.md`
+
+## 44. 실제 이더넷 수신 확인 도구 (netcheck)
+
+루프백 자체검증이 아니라 **실제 이더넷 케이블로 다른 PC/장비에서 값이 도착하는지** 확인하는 CLI.
+
+- transport에 서버(수신) 추가: `UdpTransport.server(port, host="0.0.0.0")` + `recvfrom()`,
+  `TcpTransport.server()` → `TcpServer.accept()`
+- `sdk/nexys/netcheck.py` — `listen` / `send` / `ips` 서브커맨드 CLI
+  - `listen`: 0.0.0.0 바인딩(모든 인터페이스=이더넷 포함), 수신 값마다 소스 IP·시퀀스·값·지연 출력,
+    패킷 수/속도/시퀀스 유실 집계, 자기 IP 주소 표시
+  - `send`: 상대 IP로 sine/ramp/count/const 값을 N개 @hz Hz 송신 (시퀀스+타임스탬프)
+  - 와이어 포맷: `NEXYS,<seq>,<unix_time>,<value>\n` (장비가 직접 emit 가능, 미매칭 데이터도 raw 표시)
+- 콘솔 스크립트 `nexys-netcheck` 엔트리포인트 추가
+- 사용법: 수신 PC `python -m nexys.netcheck listen --proto udp --port 5005`,
+  송신 PC `python -m nexys.netcheck send --proto udp --host <수신PC IP> --port 5005`
+
+**검증**: `pytest` **18개** 통과 (UDP/TCP 서버 실수신, 프로토콜 라운드트립, send→server 도달).
+2개 프로세스로 실제 네트워크 스택 통과 시연 — 192.168.45.240:5005로 5패킷 수신, 유실 0, ~0.3ms.
+
+파일: `sdk/nexys/netcheck.py`(신규), `sdk/nexys/interfaces/{udp,tcp}.py`(서버 추가),
+`sdk/nexys/interfaces/__init__.py`, `sdk/tests/test_netcheck.py`(신규),
+`sdk/pyproject.toml`(스크립트), `sdk/README.md`
