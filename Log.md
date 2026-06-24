@@ -685,3 +685,26 @@ app/page.tsx                  (모듈 생성 토스트에 param 표시)
 - **보드 테마**: 슬레이트 섀시 + NI 그린 액센트
 
 파일: `lib/targets/python.ts`(NI 변형), `lib/targets/index.ts`(3타겟+`py()` 헬퍼), `lib/targets/pinmap.ts`(`niPin`), `components/board-illustrations.tsx`(NiPxie/NiCrio/NiCdaqBoard), `components/wiring-canvas.tsx`(NI 테마), `lib/mock-devices.ts`(NI 3대)
+
+---
+
+# Round 9 — NI 예제 기반 샘플 모듈 (2026-06-24)
+
+## 38. nidaqmx-python 예제를 nexys 모듈로 포팅
+
+`github.com/ni/nidaqmx-python/examples`의 실제 예제 파일을 nexys 블록 모듈(Sub-VI)로 옮겨 MODULES 카테고리에 시드. 각 모듈은 원본 예제 파일명을 주석으로 명시.
+
+| 모듈 | 원본 예제 | 동작 | 입력 |
+|---|---|---|---|
+| `NI_Voltage_Sample` | voltage_sample.py | AI0 단일 전압 측정 → TDMS | — |
+| `NI_Voltage_TDMS` | voltage_acq_int_clk_tdms_logging.py | 유한 100샘플 수집 + TDMS 로깅 (1ms) | — |
+| `NI_Voltage_RMS` | cont_voltage_acq_int_clk.py | AI0 연속 수집 + RMS(200) 모니터 | — |
+| `NI_Thermocouple` | thrmcpl_sample.py | 열전대 단일 측정 → °C 로깅 | — |
+| `NI_AO_Voltage` | analog_out (ao sw-timed) | AO0 전압 출력 | `volts` |
+| `NI_DO_Lines` | write_dig_lines.py | DO0=H, DO1=L, DO2=H 라인 패턴 | — |
+| `NI_DI_Line` | digital_in (단일 라인) | DI0 HIGH 시 부저 알람 | — |
+
+- 헬퍼 빌더 추가: `aoWrite`, `computeRms`, `repeatN`, `ifChannelThen` (sample-modules.ts)
+- 기존 세션이 있는 사용자도 새 NI 샘플을 받도록 `app/page.tsx`에서 id 기준 병합 시드 (없는 것만 추가)
+
+파일: `lib/blockly/sample-modules.ts`(7 NI 모듈 + 헬퍼), `app/page.tsx`(병합 시드)

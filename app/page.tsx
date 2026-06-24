@@ -255,7 +255,12 @@ export default function Page() {
     // Modules MUST be registered before the workspace JSON (which may contain
     // module blocks) is loaded — setModules fires the panel's subscription
     // which re-registers the block types synchronously.
-    if (saved.modules?.length) setModules(saved.modules);
+    if (saved.modules?.length) {
+      // Merge in any newly-shipped sample modules the saved session predates.
+      const have = new Set(saved.modules.map(m => m.id));
+      const fresh = SAMPLE_MODULES.filter(m => !have.has(m.id));
+      setModules(fresh.length ? [...saved.modules, ...fresh] : saved.modules);
+    }
     wsRef.current.loadTemplate(saved.workspaceJson);
     setActiveTemplateId(saved.templateId);
     if (saved.wiringLayout) setWiringLayout(saved.wiringLayout);
