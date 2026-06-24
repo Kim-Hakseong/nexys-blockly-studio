@@ -83,6 +83,7 @@ export class SimRunner {
       channels: cloneChannels(INITIAL_CHANNEL_STATE),
       logs: [],
       metrics: { ...INITIAL_METRICS },
+      tdms: {},
     };
   }
 
@@ -144,6 +145,7 @@ export class SimRunner {
       channels: cloneChannels(INITIAL_CHANNEL_STATE),
       logs: [],
       metrics: { ...INITIAL_METRICS },
+      tdms: {},
     };
     this.scheduleNotify();
 
@@ -333,6 +335,9 @@ export class SimRunner {
         const v = await this.evalExpression(input(block, "VALUE"));
         const num0 = Number(v) || 0;
         this.snapshot.metrics.samples += 1;
+        const chan = (this.snapshot.tdms[name] ??= { t: [], v: [] });
+        chan.t.push(this.now());
+        chan.v.push(num0);
         this.log('data', `TDMS:${name}`, `${num0.toFixed(4)}`);
         return;
       }

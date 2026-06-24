@@ -5,8 +5,10 @@ import { cn } from '@/lib/utils';
 import { HISTORY_LEN, type LogEntry, type SimSnapshot } from '@/lib/simulator/types';
 import {
   Play, Square, RotateCcw, Activity, AlertTriangle,
-  CircleCheck, Database, Trash2, Filter,
+  CircleCheck, Database, Trash2, Filter, FileDown,
 } from 'lucide-react';
+import { buildTdms } from '@/lib/tdms/writer';
+import { toast } from 'sonner';
 
 interface RuntimePanelProps {
   snapshot: SimSnapshot;
@@ -47,6 +49,50 @@ export function RuntimePanel({ snapshot, onRun, onStop, onReset }: RuntimePanelP
     return true;
   });
 
+  const tdmsNames = Object.keys(snapshot.tdms ?? {});
+  const tdmsSamples = tdmsNames.reduce((n, k) => n + snapshot.tdms[k].v.length, 0);
+
+  const handleExportTdms = () => {
+    if (tdmsSamples === 0) {
+      toast.error('내보낼 TDMS 데이터가 없습니다', {
+        description: 'TDMS 로그 블록이 있는 워크스페이스를 먼저 실행하세요.',
+      });
+      return;
+    }
+    const channels = tdmsNames.map(name => ({
+      name,
+      data: snapshot.tdms[name].v,
+      properties: {
+        unit_string: '',
+        sample_count: snapshot.tdms[name].v.length,
+        first_t_ms: snapshot.tdms[name].t[0] ?? 0,
+        last_t_ms: snapshot.tdms[name].t[snapshot.tdms[name].t.length - 1] ?? 0,
+      },
+    }));
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const bytes = buildTdms(channels, {
+      group: 'Nexys Run',
+      fileProps: {
+        name: `nexys_run_${stamp}`,
+        producer: 'Nexys Blockly Studio',
+        format: 'TDMS 2.0',
+      },
+    });
+    // Uint8Array → Blob → download
+    const blob = new Blob([bytes as BlobPart], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexys_run_${stamp}.tdms`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success('TDMS 파일 저장됨', {
+      description: `${tdmsNames.length}개 채널 · ${tdmsSamples.toLocaleString()} 샘플 → ${a.download}`,
+    });
+  };
+
   return (
     <div className="flex flex-col h-full bg-bg">
       {/* ───── Controls + status ───── */}
@@ -80,6 +126,22 @@ export function RuntimePanel({ snapshot, onRun, onStop, onReset }: RuntimePanelP
         >
           <RotateCcw size={12} strokeWidth={1.75} />
           Reset
+        </button>
+        <button
+          onClick={handleExportTdms}
+          disabled={tdmsSamples === 0}
+          title={tdmsSamples === 0
+            ? 'TDMS 로그 데이터 없음 — 시뮬레이션을 실행하세요'
+            : `실제 .tdms 바이너리로 내보내기 (${tdmsNames.length}채널 · ${tdmsSamples} 샘플)`}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-2 text-sm border border-border transition-colors',
+            tdmsSamples === 0
+              ? 'text-text-muted/40 cursor-not-allowed'
+              : 'text-text-muted hover:text-text hover:bg-surface-2'
+          )}
+        >
+          <FileDown size={12} strokeWidth={1.75} />
+          Export .tdms
         </button>
         <div className="flex-1" />
         <StatusBadge status={snapshot.status} elapsedSec={elapsedSec} />

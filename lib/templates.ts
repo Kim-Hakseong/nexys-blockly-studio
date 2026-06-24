@@ -10,6 +10,7 @@
 
 import { INITIAL_WORKSPACE_STATE } from './blockly/initial-workspace';
 import { DEFAULT_LAYOUT, type WiringLayout } from './hardware/wiring-state';
+import { moduleBlockType } from './blockly/module-store';
 
 export interface Template {
   id: string;
@@ -146,6 +147,15 @@ const procDef = (name: string, body?: B): B => ({
 const procCall = (name: string): B => ({
   type: 'procedures_callnoreturn',
   extraState: { name, params: [] },
+});
+
+// module (Sub-VI) call block — `id` is the sample-module id (e.g. 'mod_ni_di_line').
+// `args` maps param name → value block (becomes the ARG_<name> input).
+const mod = (id: string, args?: Record<string, B>): B => ({
+  type: moduleBlockType(id),
+  ...(args
+    ? { inputs: Object.fromEntries(Object.entries(args).map(([k, v]) => [`ARG_${k}`, { block: v }])) }
+    : {}),
 });
 
 // position helper — drops a block as a workspace top-level at given coords
@@ -411,6 +421,50 @@ const ENV_CHAMBER_STATE = {
   ],
 };
 
+// =============================================================
+//  NI_DAQ_Station — NI 모듈(Sub-VI) 조합 데모
+// =============================================================
+//  Round 9에서 추가한 nidaqmx-python 예제 기반 모듈을 한 워크스페이스에
+//  모아 보여주는 시연용 템플릿. 500ms 주기로 7개 NI 모듈을 순차 호출 —
+//  전압 샘플/연속 RMS/열전대/AO 출력/DO 라인 패턴/DI 라인 감시.
+//  NI PXIe·cRIO·cDAQ 타겟에서 nidaqmx Python으로 그대로 생성된다.
+const NI_DEMO_STATE = {
+  blocks: {
+    languageVersion: 0,
+    blocks: [
+      top(80, 40, loopEvery(500, chain(
+        mod('mod_ni_voltage_sample'),               // AI0 단일 전압 → TDMS
+        mod('mod_ni_voltage_rms'),                  // AI0 연속 RMS(200) → TDMS
+        mod('mod_ni_thermocouple'),                 // 열전대 °C → TDMS
+        mod('mod_ni_ao_voltage', { volts: num(2.5) }), // AO0 = 2.5 V
+        mod('mod_ni_do_lines'),                     // DO0=H, DO1=L, DO2=H
+        mod('mod_ni_di_line'),                      // DI0 HIGH → 부저
+      )!)),
+    ],
+  },
+};
+
+const NI_DEMO_LAYOUT: WiringLayout = {
+  devices: [
+    { id: 'd-ni-tc',    type: 'thermo',  x: 40,  y: 40 },
+    { id: 'd-ni-pot',   type: 'pot',     x: 40,  y: 150 },
+    { id: 'd-ni-motor', type: 'motor',   x: 40,  y: 260 },
+    { id: 'd-ni-sw',    type: 'switch',  x: 200, y: 40 },
+    { id: 'd-ni-led0',  type: 'led',     x: 200, y: 150 },
+    { id: 'd-ni-led1',  type: 'led',     x: 200, y: 220 },
+    { id: 'd-ni-buz',   type: 'buzzer',  x: 200, y: 290 },
+  ],
+  wires: [
+    { id: 'w1', deviceId: 'd-ni-tc',    channel: 'AI0' }, // 열전대/전압 측정
+    { id: 'w2', deviceId: 'd-ni-pot',   channel: 'AI1' },
+    { id: 'w3', deviceId: 'd-ni-motor', channel: 'AO0' }, // NI_AO_Voltage 구동
+    { id: 'w4', deviceId: 'd-ni-sw',    channel: 'DI0' }, // NI_DI_Line 입력
+    { id: 'w5', deviceId: 'd-ni-led0',  channel: 'DO0' }, // NI_DO_Lines
+    { id: 'w6', deviceId: 'd-ni-led1',  channel: 'DO1' },
+    { id: 'w7', deviceId: 'd-ni-buz',   channel: 'DO2' },
+  ],
+};
+
 // ============================================================
 //  Template registry
 // ============================================================
@@ -561,6 +615,16 @@ export const TEMPLATES: Template[] = [
     tag: 'industrial · profile · pro',
     state: ENV_CHAMBER_STATE,
     wiringLayout: ENV_CHAMBER_LAYOUT,
+  },
+  // ── NI module demo ─────────────────────────────────────────
+  {
+    id: 'ni_daq_station',
+    name: 'NI_DAQ_Station',
+    description:
+      'NI 모듈(Sub-VI) 7종 조합 데모 — 전압 샘플·연속 RMS·열전대·AO 출력·DO 라인·DI 감시를 500ms 주기로 호출. NI PXIe/cRIO/cDAQ 타겟에서 nidaqmx Python 생성.',
+    tag: 'NI · nidaqmx · modules',
+    state: NI_DEMO_STATE,
+    wiringLayout: NI_DEMO_LAYOUT,
   },
 ];
 

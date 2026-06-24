@@ -708,3 +708,37 @@ app/page.tsx                  (모듈 생성 토스트에 param 표시)
 - 기존 세션이 있는 사용자도 새 NI 샘플을 받도록 `app/page.tsx`에서 id 기준 병합 시드 (없는 것만 추가)
 
 파일: `lib/blockly/sample-modules.ts`(7 NI 모듈 + 헬퍼), `app/page.tsx`(병합 시드)
+
+---
+
+# Round 10 — NI 데모 템플릿 + 실제 TDMS 저장 (2026-06-24)
+
+## 39. NI_DAQ_Station 데모 템플릿
+
+Round 9 NI 모듈 7종을 한 워크스페이스에 조합한 시연용 템플릿 추가. 500ms 루프에서
+전압 샘플 → 연속 RMS → 열전대 → AO 출력(2.5V) → DO 라인 패턴 → DI 감시를 순차 호출.
+모듈 블록을 템플릿에서 참조하도록 `mod()` 헬퍼(`moduleBlockType` 기반) 추가.
+와이어링 레이아웃(열전대/포트/모터/스위치/LED×2/부저)도 함께 자동 적용.
+
+파일: `lib/templates.ts`(`mod` 헬퍼, `NI_DEMO_STATE`/`NI_DEMO_LAYOUT`, 레지스트리 등록)
+
+## 40. TDMS 로그 — 실제 TDMS 2.0 바이너리 저장 (검증 완료)
+
+**확인 결과(기존)**: TDMS 로그는 실제 저장되지 않았음 — 시뮬레이터는 콘솔 텍스트(`TDMS:name v`),
+생성 코드는 가상 SDK 호출(`nexys.output.log_tdms`), Arduino/STM32는 시리얼 CSV뿐.
+
+**개선**: 진짜 TDMS 파일을 생성하도록 구현.
+
+- `lib/tdms/writer.ts` — **스펙 준수 TDMS 2.0 바이너리 인코더** 신규 작성.
+  - lead-in("TDSm" + ToC 0x0E + version 4713 + next/raw offset), 메타데이터(root/group/channel
+    오브젝트 + raw data index `[Uint32(20), Int32(10), Uint32(1), Uint64(count)]`), float64 contiguous raw data.
+  - 파일/그룹/채널 properties(string·i32·double) 지원, ragged 채널 길이 허용.
+  - **npTDMS 1.10으로 라운드트립 검증 완료** — 채널 값·properties·계층 모두 일치 (assert 전부 통과).
+- `lib/simulator/{types,runner}.ts` — 런 중 `log_to_tdms` 샘플을 `snapshot.tdms[name]={t,v}`로 누적.
+- `components/runtime-panel.tsx` — **Export .tdms** 버튼 추가 → 실제 `.tdms` 파일 다운로드 (sonner 토스트).
+- `lib/targets/python.ts` — 생성 Python이 실제 TDMS를 쓰도록 변경:
+  - RPi/Jetson: `from nptdms import TdmsWriter` + `nexys.tdms_open(..., writer=TdmsWriter)`
+  - NI(PXIe/cRIO/cDAQ): DAQmx `configure_logging(LOG_AND_READ)` 주석 + `nexys.tdms_open(backend="daqmx")`
+
+파일: `lib/tdms/writer.ts`(신규), `lib/simulator/types.ts`, `lib/simulator/runner.ts`,
+`components/runtime-panel.tsx`, `lib/targets/python.ts`

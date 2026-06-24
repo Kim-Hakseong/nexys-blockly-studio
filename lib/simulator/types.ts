@@ -36,12 +36,23 @@ export interface SimMetrics {
 
 export type RunStatus = 'idle' | 'running' | 'stopped' | 'error';
 
+/** Captured TDMS samples per channel name, for real .tdms export. */
+export interface TdmsChannelData {
+  /** elapsed ms since run start for each sample */
+  t: number[];
+  /** logged values */
+  v: number[];
+}
+export type TdmsLog = Record<string, TdmsChannelData>;
+
 export interface SimSnapshot {
   status: RunStatus;
   startedAt: number | null;
   channels: ChannelState;
   logs: LogEntry[];
   metrics: SimMetrics;
+  /** accumulated TDMS log data, keyed by channel name */
+  tdms: TdmsLog;
   lastError?: string;
 }
 
