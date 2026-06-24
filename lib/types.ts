@@ -22,7 +22,7 @@ export interface Device {
   channels: ChannelCapacity;
   modulesInstalled: string[];
   description?: string;   // 시연 설명
-  /** Hardware target this unit runs (matches lib/targets ids: rpi/jetson/arduino/stm32). */
+  /** Hardware target this unit runs (matches lib/targets ids: ni_pxie/ni_crio/ni_cdaq). */
   targetId: string;
 }
 

@@ -59,6 +59,39 @@ python sdk/examples/bit_demo.py         # writes bit_demo.tdms
 python sdk/examples/ni_acquire_demo.py  # writes ni_acquire.tdms
 ```
 
+## Interfaces & self-verification (BIT)
+
+Comms transports for talking to / verifying the instrument:
+
+```python
+from nexys.interfaces import UdpTransport, TcpTransport, SerialTransport
+```
+
+Each is a byte pipe (`send` / `recv` / `close`) and offers a `loopback()`
+constructor (serial: `PtySerialLoopback`) that wires it back to itself — used by
+the Built-In Test to verify link integrity with **no peer hardware**.
+
+```python
+import nexys
+nexys.init(target="sim")              # or a real NI target
+report = nexys.selftest.run()         # UDP + TCP + Serial loopback + channel BIT
+print(report.summary())
+assert report.passed
+```
+
+```
+nexys BIT self-test
+  [PASS] udp.loopback           sent 24B, recv 24B    0.06 ms
+  [PASS] tcp.loopback           sent 24B, recv 24B   52.13 ms
+  [PASS] serial.loopback        sent 24B, recv 24B   57.27 ms
+  [PASS] channel.ai0_range      AI0=2.862 V on sim
+  --> 4/4 checks passed (PASS)
+```
+
+`python sdk/examples/selftest_demo.py` exits 0 on PASS / 1 on FAIL — drop it in
+CI or a pre-deploy gate. Real serial ports use pyserial (`pip install
+nexys-sdk[serial]`); the loopback BIT itself is pure stdlib (pseudo-terminal).
+
 ## API surface (what the generator emits)
 
 ```

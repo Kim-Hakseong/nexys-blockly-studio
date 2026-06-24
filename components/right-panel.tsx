@@ -67,7 +67,7 @@ export function RightPanel({
   onCommitEdit,
   codeLanguage = 'python',
   targetName,
-  targetId = 'rpi',
+  targetId = 'ni_pxie',
   bindings,
   inputs,
   onInputChange,

@@ -15,6 +15,7 @@ dependencies = []   # core (sim + TDMS writer) is pure stdlib
 [project.optional-dependencies]
 ni = ["nidaqmx>=0.6"]                 # real NI hardware
 mqtt = ["paho-mqtt>=1.6"]             # real MQTT publish
+serial = ["pyserial>=3.5"]           # real serial ports (loopback BIT is stdlib)
 read = ["npTDMS>=1.6"]               # to read produced .tdms files
 dev = ["pytest>=7", "npTDMS>=1.6"]
 

@@ -27,37 +27,6 @@ function pinFor(targetId: string, ch: string): PinEntry {
   const { kind, idx } = p;
 
   switch (targetId) {
-    case 'rpi': {
-      // Nexys-RPi-Mod HAT virtual mapping over BCM GPIO
-      if (kind === 'DO') return { channel: ch, pin: `GPIO${2 + idx}` };
-      if (kind === 'DI') return { channel: ch, pin: `GPIO${14 + idx}` };
-      if (kind === 'AI') return { channel: ch, pin: `MCP3008 CH${idx}`, note: 'SPI ADC' };
-      if (kind === 'AO') return { channel: ch, pin: `MCP4922 ${idx < 2 ? 'A' : 'B'}${idx % 2}`, note: 'SPI DAC' };
-      break;
-    }
-    case 'jetson': {
-      if (kind === 'DO') return { channel: ch, pin: `40-pin #${7 + idx}` };
-      if (kind === 'DI') return { channel: ch, pin: `40-pin #${11 + idx}` };
-      if (kind === 'AI') return { channel: ch, pin: `ADS1115 CH${idx}`, note: 'I²C ADC' };
-      if (kind === 'AO') return { channel: ch, pin: `MCP4728 CH${idx}`, note: 'I²C DAC' };
-      break;
-    }
-    case 'arduino': {
-      if (kind === 'DO') return { channel: ch, pin: `D${2 + idx}` };
-      if (kind === 'DI') return { channel: ch, pin: `D${22 + idx}` };
-      if (kind === 'AI') return { channel: ch, pin: `A${idx}` };
-      if (kind === 'AO') return { channel: ch, pin: `PWM ${[5, 6, 9, 10][idx] ?? 5}`, note: '8-bit PWM' };
-      break;
-    }
-    case 'stm32': {
-      if (kind === 'DO') return { channel: ch, pin: `PA${idx}` };
-      if (kind === 'DI') return { channel: ch, pin: `PB${idx}` };
-      if (kind === 'AI') return { channel: ch, pin: `ADC1_IN${idx}` };
-      if (kind === 'AO') return idx < 2
-        ? { channel: ch, pin: `DAC_OUT${idx + 1}` }
-        : { channel: ch, pin: `TIM3_CH${idx}`, note: 'PWM' };
-      break;
-    }
     // ── NI targets: NI-DAQmx physical channel strings ──
     case 'ni_pxie': return niPin('PXI1Slot2', kind, idx);
     case 'ni_crio': return niPin('cRIO1Mod1', kind, idx);

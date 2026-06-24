@@ -23,7 +23,7 @@ with LabVIEW / DIAdem / npTDMS.
 """
 from __future__ import annotations
 
-from . import channels, output, signal, timing, tdms
+from . import channels, interfaces, output, selftest, signal, timing, tdms
 from ._core import (
     config,
     get_backend,
@@ -45,6 +45,8 @@ __all__ = [
     "signal",
     "output",
     "tdms",
+    "interfaces",
+    "selftest",
 ]
 
 __version__ = "0.1.0"

@@ -543,30 +543,6 @@ interface BoardTheme {
 }
 
 const BOARD_THEMES: Record<string, BoardTheme> = {
-  rpi: {
-    pcb: 'hsl(140 42% 26%)', stroke: 'hsl(140 42% 38%)',
-    text: 'hsl(140 30% 85%)', sub: 'hsl(140 22% 62%)', accent: 'hsl(140 45% 58%)',
-    label: 'RASPBERRY PI 4B', subtitle: 'Nexys-RPi-Mod HAT',
-    pinUnlit: 'hsl(140 18% 22%)', pinStroke: 'hsl(140 28% 34%)',
-  },
-  jetson: {
-    pcb: 'hsl(150 14% 13%)', stroke: 'hsl(150 16% 26%)',
-    text: 'hsl(96 35% 80%)', sub: 'hsl(150 10% 60%)', accent: 'hsl(96 60% 50%)',
-    label: 'JETSON ORIN', subtitle: 'Nexys carrier board',
-    pinUnlit: 'hsl(150 10% 22%)', pinStroke: 'hsl(150 14% 32%)',
-  },
-  arduino: {
-    pcb: 'hsl(185 52% 28%)', stroke: 'hsl(185 52% 40%)',
-    text: 'hsl(185 40% 88%)', sub: 'hsl(185 28% 64%)', accent: 'hsl(185 55% 60%)',
-    label: 'ARDUINO MEGA', subtitle: 'Nexys shield',
-    pinUnlit: 'hsl(185 22% 22%)', pinStroke: 'hsl(185 30% 34%)',
-  },
-  stm32: {
-    pcb: 'hsl(206 48% 28%)', stroke: 'hsl(206 48% 42%)',
-    text: 'hsl(206 42% 88%)', sub: 'hsl(206 28% 66%)', accent: 'hsl(206 60% 62%)',
-    label: 'STM32 F4 NUCLEO', subtitle: 'Nexys cape',
-    pinUnlit: 'hsl(206 22% 24%)', pinStroke: 'hsl(206 30% 36%)',
-  },
   // NI instruments — slate chassis + NI green accent
   ni_pxie: {
     pcb: 'hsl(210 12% 17%)', stroke: 'hsl(210 12% 30%)',
@@ -591,7 +567,7 @@ const BOARD_THEMES: Record<string, BoardTheme> = {
 function NexysBoard({
   snapshot, hoverPin, targetId,
 }: { snapshot: SimSnapshot; hoverPin: string | null; targetId: string }) {
-  const th = BOARD_THEMES[targetId] ?? BOARD_THEMES.rpi;
+  const th = BOARD_THEMES[targetId] ?? BOARD_THEMES.ni_pxie;
   const cx = BOARD.x + BOARD.w / 2;
   return (
     <g filter="url(#boardShadow)">
