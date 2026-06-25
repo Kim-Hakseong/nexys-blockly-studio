@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
   X, MonitorCog, Blocks, Package, Server, Network, Code2,
+  ChevronRight, Apple, MonitorSmartphone, FolderDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -110,42 +111,181 @@ function Kbd({ children }: { children: React.ReactNode }) {
   return <code className="mono text-[12px] text-signal bg-surface-2 px-1 py-0.5 rounded">{children}</code>;
 }
 
+/** Collapsible "상세보기" panel. */
+function Collapse({
+  title, icon: Icon, defaultOpen = false, children,
+}: {
+  title: string;
+  icon?: typeof Apple;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-border rounded mb-2.5 bg-surface-2/20">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-[13px] text-text hover:bg-surface-2 transition-colors"
+      >
+        <ChevronRight
+          size={13}
+          className={cn('shrink-0 transition-transform text-text-muted', open && 'rotate-90')}
+        />
+        {Icon && <Icon size={14} strokeWidth={1.75} className="shrink-0 text-signal" />}
+        <span className="font-medium">{title}</span>
+        <span className="flex-1" />
+        <span className="text-[10px] text-text-muted overline">{open ? '접기' : '상세보기'}</span>
+      </button>
+      {open && <div className="px-3 pb-3 pt-1">{children}</div>}
+    </div>
+  );
+}
+
+/** One node in a step tree (vertical timeline). */
+function Step({
+  n, title, children, last = false,
+}: {
+  n: number | string;
+  title: React.ReactNode;
+  children?: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <li className={cn('relative pl-6', last ? 'pb-0' : 'pb-3.5')}>
+      {/* connector line */}
+      {!last && <span className="absolute left-[8px] top-4 bottom-0 w-px bg-border" />}
+      {/* node dot */}
+      <span className="absolute left-[3px] top-[3px] flex items-center justify-center w-[12px] h-[12px] rounded-full bg-signal/15 border border-signal/60">
+        <span className="mono text-[8px] text-signal leading-none">{n}</span>
+      </span>
+      <div className="text-[12.5px] text-text font-medium">{title}</div>
+      {children && <div className="mt-1 text-[12px] text-text-muted leading-relaxed">{children}</div>}
+    </li>
+  );
+}
+function Tree({ children }: { children: React.ReactNode }) {
+  return <ol className="mt-1">{children}</ol>;
+}
+
 function SetupSection() {
   return (
     <div>
       <H>로컬 실행에 필요한 것 (공통)</H>
       <P>
-        <Kbd>package.json</Kbd>의 의존성(Next 14 · Blockly · Monaco · Tailwind)이 전부입니다.
-        외부 DB·백엔드·API 키가 필요 없습니다. 필요한 것은 <b>Node.js 18.18+ (권장 20 LTS)</b>와 <b>git</b> 뿐입니다.
+        필요한 것은 <b>Node.js 20 LTS</b> 하나뿐입니다 (프로젝트를 git으로 받을 거면 <b>git</b>도).
+        외부 DB·백엔드·API 키가 필요 없습니다. <Kbd>package.json</Kbd>의 의존성은 <Kbd>npm install</Kbd> 한 번으로 전부 설치됩니다.
       </P>
-      <Code>{`git clone <repo-url>
-cd nexys-blockly-studio
-npm install        # package.json 의존성 설치
-npm run dev        # http://localhost:3000`}</Code>
-
-      <H>macOS</H>
-      <P>Homebrew로 Node 설치 후 위 명령 실행:</P>
-      <Code>{`brew install node@20 git
-node -v   # v20.x 확인
-npm install && npm run dev`}</Code>
-
-      <H>Windows</H>
       <P>
-        <b>nvm-windows</b> 또는 nodejs.org 설치 프로그램으로 Node 20 LTS 설치 → PowerShell에서:
+        아래에서 본인 OS의 <b>상세보기</b>를 펼치면 — Node.js 설치부터 프로젝트 받기, 실행까지 — 처음 해보는 사람도
+        따라 할 수 있는 전체 단계가 나옵니다.
       </P>
-      <Code>{`# (옵션) nvm-windows 사용 시
-nvm install 20
-nvm use 20
-node -v
 
+      <Collapse title="macOS — 처음부터 끝까지" icon={Apple} defaultOpen>
+        <Tree>
+          <Step n={1} title="터미널 열기">
+            <Kbd>⌘ + Space</Kbd> → &quot;터미널&quot; 입력 → 실행.
+          </Step>
+          <Step n={2} title="Node.js가 이미 있는지 확인">
+            <Code>{`node -v`}</Code>
+            <Kbd>v20.x</Kbd>(또는 18 이상) 가 나오면 4번으로 건너뛰세요. <Kbd>command not found</Kbd>면 3번으로.
+          </Step>
+          <Step n={3} title="Node.js 설치 (둘 중 하나)">
+            <b>방법 A — 설치 프로그램 (가장 쉬움):</b> <Kbd>nodejs.org</Kbd> 접속 → <b>20 LTS</b> 다운로드 →
+            <Kbd>.pkg</Kbd> 실행, 계속 &quot;다음&quot;.
+            <br />
+            <b>방법 B — Homebrew (버전 관리 편함):</b>
+            <Code>{`# Homebrew가 없다면 먼저:
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install node@20
+node -v   # v20.x 확인`}</Code>
+          </Step>
+          <Step n={4} title="git 확인 (git으로 받을 경우만)">
+            <Code>{`git -v`}</Code>
+            없다고 나오면 <Kbd>xcode-select --install</Kbd> 실행(개발자 도구 설치). 또는 <Kbd>brew install git</Kbd>.
+            <br />git을 안 쓰고 ZIP로 받을 거면 이 단계는 건너뛰세요(아래 &quot;git 없이&quot; 참고).
+          </Step>
+          <Step n={5} title="프로젝트 받기">
+            git 사용 시:
+            <Code>{`cd ~/Desktop          # 받을 위치로 이동
 git clone <repo-url>
-cd nexys-blockly-studio
-npm install
+cd nexys-blockly-studio`}</Code>
+            git 없이 받는 방법은 아래 &quot;git 없이 ZIP로 받기&quot;를 펼쳐 보세요.
+          </Step>
+          <Step n={6} title="의존성 설치">
+            <Code>{`npm install`}</Code>
+            (수 분 소요 — 처음 한 번만)
+          </Step>
+          <Step n={7} title="실행" last>
+            <Code>{`npm run dev`}</Code>
+            브라우저에서 <Kbd>http://localhost:3000</Kbd> 접속 → 스튜디오가 뜨면 성공. 종료는 터미널에서 <Kbd>Ctrl + C</Kbd>.
+          </Step>
+        </Tree>
+      </Collapse>
+
+      <Collapse title="Windows — 처음부터 끝까지" icon={MonitorSmartphone}>
+        <Tree>
+          <Step n={1} title="Node.js 설치">
+            <Kbd>nodejs.org</Kbd> 접속 → <b>20 LTS</b> 다운로드 → <Kbd>.msi</Kbd> 실행, 체크박스 그대로 두고 &quot;Next&quot;로 설치.
+            <br />(버전 관리를 원하면 <Kbd>nvm-windows</Kbd> 설치 후 <Kbd>nvm install 20</Kbd> / <Kbd>nvm use 20</Kbd>.)
+          </Step>
+          <Step n={2} title="PowerShell 열고 설치 확인">
+            시작 메뉴 → &quot;PowerShell&quot; 실행:
+            <Code>{`node -v   # v20.x
+npm -v`}</Code>
+          </Step>
+          <Step n={3} title="git 설치 (git으로 받을 경우만)">
+            <Kbd>git-scm.com/download/win</Kbd> 에서 설치(기본 옵션). 확인: <Kbd>git -v</Kbd>.
+            <br />git 없이 받을 거면 건너뛰고 아래 &quot;git 없이&quot;를 보세요.
+          </Step>
+          <Step n={4} title="프로젝트 받기">
+            <Code>{`cd $HOME\\Desktop
+git clone <repo-url>
+cd nexys-blockly-studio`}</Code>
+            <b>주의:</b> OneDrive 동기화 폴더는 피하고 <Kbd>C:\dev\</Kbd> 처럼 짧은 경로를 권장합니다.
+          </Step>
+          <Step n={5} title="의존성 설치">
+            <Code>{`npm install`}</Code>
+            <b>실행 정책 오류</b>(<Kbd>npm.ps1 cannot be loaded</Kbd>)가 나면, PowerShell을 <b>관리자로</b> 열고:
+            <Code>{`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`}</Code>
+            <Kbd>Y</Kbd> 입력 후 다시 <Kbd>npm install</Kbd>.
+          </Step>
+          <Step n={6} title="실행" last>
+            <Code>{`npm run dev`}</Code>
+            브라우저에서 <Kbd>http://localhost:3000</Kbd>. 포트가 사용 중이면 <Kbd>npm run dev -- -p 3001</Kbd>. 종료는 <Kbd>Ctrl + C</Kbd>.
+          </Step>
+        </Tree>
+      </Collapse>
+
+      <Collapse title="git 없이 ZIP로 직접 받기 (git 설치 불필요)" icon={FolderDown}>
+        <P>
+          git을 연결/설치하지 않고 GitHub 저장소에서 프로젝트를 통째로 내려받는 방법입니다. <b>Node.js만 있으면</b> 됩니다.
+        </P>
+        <Tree>
+          <Step n={1} title="GitHub 저장소 페이지 열기">
+            브라우저로 저장소(repo) 페이지에 접속합니다.
+          </Step>
+          <Step n={2} title="ZIP 다운로드">
+            초록색 <b>Code ▾</b> 버튼 클릭 → <b>Download ZIP</b> 선택.
+            <br />(특정 버전을 원하면 Releases 페이지의 Source code(zip)도 가능)
+          </Step>
+          <Step n={3} title="압축 해제">
+            <b>macOS:</b> 받은 <Kbd>.zip</Kbd> 더블클릭. <b>Windows:</b> 우클릭 → &quot;압축 풀기&quot;.
+            <br />짧은 경로(예: 바탕화면, <Kbd>C:\dev\</Kbd>)에 두세요.
+          </Step>
+          <Step n={4} title="그 폴더에서 터미널/PowerShell 열기">
+            <Code>{`cd <압축 푼 폴더 경로>/nexys-blockly-studio`}</Code>
+          </Step>
+          <Step n={5} title="설치 후 실행" last>
+            <Code>{`npm install
 npm run dev`}</Code>
-      <P>
-        실행 정책 오류가 나면 PowerShell을 관리자로 열고
-        <Kbd>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</Kbd> 후 재시도하세요.
-      </P>
+            <Kbd>http://localhost:3000</Kbd> 접속.
+          </Step>
+        </Tree>
+        <P>
+          <b>단점:</b> 이후 코드가 업데이트되면 ZIP을 다시 받아야 합니다(git이면 <Kbd>git pull</Kbd> 한 줄).
+          자주 받아 쓸 거라면 git 방식을 권장합니다.
+        </P>
+      </Collapse>
 
       <H>nexys SDK (Python, 선택)</H>
       <P>

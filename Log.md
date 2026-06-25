@@ -884,3 +884,13 @@ Node 20+git만 필요·외부 DB/백엔드 없음), `docs/SETUP.md`·`docs/DEVEL
 링크 표, NI 전용 타겟·모듈·TDMS·인터페이스/BIT 최신 사실 반영.
 
 파일: `README.md`
+
+## 49. 환경 세팅 — 초보자용 상세 트리 + git 없이 ZIP 경로
+
+인앱 Guide의 환경 세팅 섹션을 개편: macOS/Windows 각각 **"상세보기"를 펼치면 단계 트리**
+(Node.js 설치 확인→설치→git→프로젝트 받기→npm install→run dev)가 나오도록 `Collapse`+`Step`/`Tree`
+컴포넌트 추가. **git 연결 없이 GitHub에서 ZIP 직접 다운로드**하는 경로도 별도 Collapse로 추가
+(Node.js만 필요, Code▾→Download ZIP→압축해제→npm install/run dev, 단점=수동 재다운로드).
+`docs/SETUP.md`에도 동일한 "1-B. git 없이 ZIP로 받기" 섹션 추가(레포 동기화).
+
+파일: `components/guide-dialog.tsx`(Collapse/Step/Tree + SetupSection 트리화), `docs/SETUP.md`(ZIP 경로)

@@ -42,6 +42,33 @@ npm run lint         # 린트 (있는 경우)
 
 ---
 
+## 1-B. git 없이 ZIP로 직접 받기 (git 설치 불필요)
+
+git을 연결/설치하지 않고 프로젝트를 통째로 내려받아 실행하는 방법입니다. **Node.js만 있으면** 됩니다.
+
+1. GitHub 저장소 페이지를 브라우저로 엽니다.
+2. 초록색 **`Code ▾`** 버튼 → **Download ZIP**.
+   (특정 버전이 필요하면 Releases 페이지의 *Source code (zip)* 도 가능)
+3. 압축 해제:
+   - **macOS**: 받은 `.zip` 더블클릭
+   - **Windows**: 우클릭 → "압축 풀기"
+   - 짧은 경로(바탕화면, `C:\dev\` 등)에 두세요. OneDrive 동기화 폴더는 피하세요.
+4. 그 폴더에서 터미널/PowerShell 열기:
+   ```bash
+   cd <압축 푼 폴더>/nexys-blockly-studio
+   ```
+5. 설치 후 실행:
+   ```bash
+   npm install
+   npm run dev
+   ```
+   → http://localhost:3000
+
+> **단점:** 코드가 업데이트되면 ZIP을 다시 받아야 합니다(git이면 `git pull` 한 줄).
+> 자주 받아 쓸 거라면 git 방식(1장)을 권장합니다.
+
+---
+
 ## 2. macOS
 
 ### 2-1. Homebrew로 Node + git 설치
