@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Save, Rocket, Play, Square, ChevronDown,
-  HelpCircle, FileCode2, Check, Sun, Moon, Monitor, Cpu,
+  HelpCircle, FileCode2, Check, Sun, Moon, Monitor, Cpu, BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Template } from '@/lib/templates';
@@ -28,6 +28,7 @@ interface TopBarProps {
   onPickTemplate: (id: string) => void;
   onPickTarget: (id: string) => void;
   onHelp: () => void;
+  onGuide: () => void;
   onPickTheme: (m: ThemeMode) => void;
 }
 
@@ -48,6 +49,7 @@ export function TopBar({
   onPickTemplate,
   onPickTarget,
   onHelp,
+  onGuide,
   onPickTheme,
 }: TopBarProps) {
   return (
@@ -93,6 +95,14 @@ export function TopBar({
       {/* Right: actions */}
       <div className="flex items-center gap-2 min-w-[320px] justify-end">
         <ThemeToggle mode={themeMode} onPick={onPickTheme} />
+        <button
+          onClick={onGuide}
+          className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] text-text-muted hover:text-text hover:bg-surface-2 transition-colors"
+          title="개발자 가이드 · 환경 세팅 / 블록→코드 / 모듈 / nexys SDK"
+        >
+          <BookOpen size={14} strokeWidth={1.75} />
+          Guide
+        </button>
         <button
           onClick={onHelp}
           className="p-1.5 text-text-muted hover:text-text hover:bg-surface-2 transition-colors"

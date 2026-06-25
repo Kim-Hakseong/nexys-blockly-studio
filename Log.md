@@ -837,3 +837,41 @@ pty 시리얼 루프백, selftest 전체 PASS. 데모 실행 시 4/4 PASS.
 파일: `sdk/nexys/netcheck.py`(신규), `sdk/nexys/interfaces/{udp,tcp}.py`(서버 추가),
 `sdk/nexys/interfaces/__init__.py`, `sdk/tests/test_netcheck.py`(신규),
 `sdk/pyproject.toml`(스크립트), `sdk/README.md`
+
+---
+
+# Round 13 — 코드 미반영 버그 수정 + 탭 비활성화 + 가이드 (2026-06-25)
+
+## 45. ★ "블록을 바꿔도 코드가 안 변함" 버그 수정 (최우선)
+
+두 가지 원인을 모두 해결:
+
+1. **드래그 변경이 코드에 반영 안 됨** — `workspace-panel.tsx` 변경 리스너가
+   `isDragging()` 게이팅에 의존 → 일부 Blockly 빌드에서 드래그-드롭 후 이벤트도
+   `isDragging()===true`라 `emit()`이 영영 안 불림(드래그로 블록 연결 시 코드 미갱신).
+   → **디바운스 방식**으로 교체: 모든 변경이 50ms 트레일링 emit 예약, 그때도 드래그 중이면
+   재예약. 드래그/필드 어떤 변경이든 최종 1회 emit 보장 + 이벤트 burst 병합.
+2. **저장된 수동 편집본이 화면을 덮음** — `editedPython`이 localStorage로 복원되어
+   Code 탭이 옛 편집본에 고정(블록 바꿔도 미세 경고만). → 복원 제거 + 저장 안 함 +
+   블록 변경 시 자동 해제(토스트 안내). 이제 **블록이 항상 source of truth**.
+
+파일: `components/workspace-panel.tsx`(디바운스 emit), `app/page.tsx`(override 자동해제·복원중단)
+
+## 46. 우측 Wiring / Devices 탭 비활성화
+
+현재 단계에서 불필요 → 두 탭을 비활성(딤 처리, 클릭 불가)으로 변경. `WIRING_DEVICES_ENABLED=false`
+플래그로 추후 복구 가능. `forcedTab`도 두 탭은 무시.
+
+파일: `components/right-panel.tsx`
+
+## 47. 환경 세팅 가이드 + 개발자 가이드 + 인앱 Guide
+
+- `docs/SETUP.md` — Windows/macOS 로컬 실행 가이드 (필요한 건 Node 20 + git + `npm install`뿐,
+  외부 DB/백엔드 없음), Python SDK 설치, 협업/배포, 트러블슈팅
+- `docs/DEVELOPER_GUIDE.md` — 사용자화 가이드: 큰 그림, 디렉터리 지도,
+  **블록↔코드 연동 + 새 블록 추가 레시피**, 모듈(Sub-VI), nexys SDK 각 부분 설명, 인터페이스/BIT, 타겟
+- `components/guide-dialog.tsx` — 위 내용을 스튜디오 안에서 보는 탭형 다이얼로그,
+  상단바 **Guide** 버튼으로 오픈 (환경세팅/블록→코드/모듈/SDK/인터페이스 5섹션)
+
+파일: `docs/SETUP.md`(신규), `docs/DEVELOPER_GUIDE.md`(신규), `components/guide-dialog.tsx`(신규),
+`components/top-bar.tsx`(Guide 버튼), `app/page.tsx`(GuideDialog 연결)

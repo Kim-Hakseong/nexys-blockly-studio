@@ -55,6 +55,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
     const emitRef = useRef<() => void>(() => {});
     const moRef = useRef<MutationObserver | null>(null);
     const moduleUnsubRef = useRef<(() => void) | null>(null);
+    const emitTimerRef = useRef<(() => void) | null>(null);
     const multiselectRef = useRef<any>(null);
     const onCodeChangeRef = useRef(onCodeChange);
     const onWorkspaceChangeRef = useRef(onWorkspaceChange);
@@ -249,28 +250,30 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
 
         emit();
 
-        // Listen to workspace events and regenerate Python, but skip events
-        // fired during an active drag — saving the workspace mid-drag has
-        // been observed to cause Blockly to fire follow-up events recursively,
-        // creating duplicate blocks at the insertion point. We flush once
-        // after the drag completes.
-        let pendingPostDrag = false;
-        workspace.addChangeListener((ev: any) => {
-          const dragging = typeof workspace.isDragging === 'function'
-            ? workspace.isDragging()
-            : false;
-          if (dragging) {
-            pendingPostDrag = true;
-            return;
-          }
-          if (pendingPostDrag) {
-            pendingPostDrag = false;
-            // queue a microtask so all drag-end events settle first
-            queueMicrotask(emit);
-            return;
-          }
-          emit();
-        });
+        // Listen to workspace events and regenerate Python. We DEBOUNCE rather
+        // than gate on isDragging(): every change schedules a trailing emit, and
+        // if a drag is still in progress when the timer fires we simply
+        // reschedule. This guarantees a final emit after ANY change — including
+        // drag-to-connect, which the previous isDragging()-gated logic could
+        // drop entirely (the post-drag events still reported isDragging()===true
+        // in some Blockly builds, so code never regenerated). Debouncing also
+        // coalesces the burst of events a single edit produces, avoiding the
+        // mid-drag re-save that used to duplicate blocks.
+        let emitTimer: ReturnType<typeof setTimeout> | null = null;
+        const scheduleEmit = () => {
+          if (emitTimer) clearTimeout(emitTimer);
+          emitTimer = setTimeout(() => {
+            emitTimer = null;
+            if (disposed) return;
+            const dragging = typeof workspace.isDragging === 'function'
+              ? workspace.isDragging()
+              : false;
+            if (dragging) { scheduleEmit(); return; }
+            emit();
+          }, 50);
+        };
+        emitTimerRef.current = () => { if (emitTimer) clearTimeout(emitTimer); };
+        workspace.addChangeListener(() => scheduleEmit());
 
         // ── Flyout scrollbar residue fix ──
         // Blockly's flyout vertical scrollbar is rendered as a SEPARATE SVG
@@ -330,6 +333,7 @@ export const WorkspacePanel = forwardRef<WorkspaceHandle, WorkspacePanelProps>(
 
       return () => {
         disposed = true;
+        try { emitTimerRef.current?.(); emitTimerRef.current = null; } catch { /* ignore */ }
         try { multiselectRef.current?.dispose?.(); multiselectRef.current = null; } catch { /* ignore */ }
         try { moduleUnsubRef.current?.(); moduleUnsubRef.current = null; } catch { /* ignore */ }
         try {

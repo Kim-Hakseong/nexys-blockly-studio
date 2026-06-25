@@ -77,10 +77,15 @@ export function RightPanel({
 }: RightPanelProps) {
   const [tab, setTab] = useState<Tab>('code');
 
+  // Wiring + Devices are disabled for now (not needed in the current phase).
+  // Flip to true to bring them back.
+  const WIRING_DEVICES_ENABLED = false;
+
   // honor external tab requests (e.g. Run pressed from top bar)
   useEffect(() => {
     if (forcedTab && forcedTab !== tab) {
-      setTab(forcedTab);
+      const allowed = WIRING_DEVICES_ENABLED || (forcedTab !== 'hardware' && forcedTab !== 'devices');
+      if (allowed) setTab(forcedTab);
       onTabConsumed?.();
     }
   }, [forcedTab, tab, onTabConsumed]);
@@ -118,6 +123,7 @@ export function RightPanel({
           icon={Plug}
           label="Wiring"
           badge={`${boundCount}`}
+          disabled={!WIRING_DEVICES_ENABLED}
         />
         <TabButton
           active={tab === 'devices'}
@@ -125,6 +131,7 @@ export function RightPanel({
           icon={HardDrive}
           label="Devices"
           badge={`${onlineCount}/${devices.length}`}
+          disabled={!WIRING_DEVICES_ENABLED}
         />
       </div>
 
@@ -211,6 +218,7 @@ function TabButton({
   label,
   badge,
   accent,
+  disabled = false,
 }: {
   active: boolean;
   onClick: () => void;
@@ -218,28 +226,35 @@ function TabButton({
   label: string;
   badge: string;
   accent?: 'signal';
+  disabled?: boolean;
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      title={disabled ? '현재 비활성화됨' : undefined}
       className={cn(
         'flex-1 px-3 py-3 text-sm flex items-center justify-center gap-1.5 transition-colors relative',
-        active
-          ? 'text-text bg-surface'
-          : 'text-text-muted hover:text-text hover:bg-surface-2'
+        disabled
+          ? 'text-text-muted/35 cursor-not-allowed'
+          : active
+            ? 'text-text bg-surface'
+            : 'text-text-muted hover:text-text hover:bg-surface-2'
       )}
     >
       <Icon size={13} strokeWidth={1.75} />
       <span className="font-medium">{label}</span>
-      <span
-        className={cn(
-          'mono text-[10px]',
-          accent === 'signal' ? 'text-signal' : active ? 'text-signal' : 'text-text-muted'
-        )}
-      >
-        {badge}
-      </span>
-      {active && (
+      {!disabled && (
+        <span
+          className={cn(
+            'mono text-[10px]',
+            accent === 'signal' ? 'text-signal' : active ? 'text-signal' : 'text-text-muted'
+          )}
+        >
+          {badge}
+        </span>
+      )}
+      {active && !disabled && (
         <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-signal" />
       )}
     </button>

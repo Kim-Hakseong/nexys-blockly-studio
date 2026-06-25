@@ -10,6 +10,7 @@ import { RightPanel } from '@/components/right-panel';
 import { StatusBar } from '@/components/status-bar';
 import { DeployDialog } from '@/components/deploy-dialog';
 import { WelcomeDialog } from '@/components/welcome-dialog';
+import { GuideDialog } from '@/components/guide-dialog';
 import { ResizeHandle } from '@/components/resize-handle';
 import { ModuleDialog } from '@/components/module-dialog';
 
@@ -72,6 +73,7 @@ export default function Page() {
   // ----- dialogs -----
   const [deployOpen, setDeployOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // ----- theme -----
   const { mode: themeMode, resolved: themeResolved, setMode: setThemeMode } = useTheme();
@@ -207,11 +209,28 @@ export default function Page() {
   const [codeRegenAt, setCodeRegenAt] = useState<string | null>(null);
   const [codeRegenCount, setCodeRegenCount] = useState(0);
   const [editedPython, setEditedPython] = useState<string | null>(null);
+  // mirror into a ref so the (stable) handleCodeChange can read the latest value
+  const editedPythonRef = useRef<string | null>(null);
+  useEffect(() => { editedPythonRef.current = editedPython; }, [editedPython]);
 
   const handleCodeChange = useCallback((code: string) => {
     setPythonCode(code);
     setCodeRegenAt(new Date().toISOString());
     setCodeRegenCount(c => c + 1);
+    // Blocks are the source of truth: if a manual Python override is active,
+    // a block change supersedes it — drop the override so the Code panel shows
+    // the freshly-generated code. (This was the "code doesn't change" bug:
+    // a persisted edit froze the view.)
+    if (editedPythonRef.current !== null) {
+      editedPythonRef.current = null;
+      setEditedPython(null);
+      if (emitCountRef.current > 0) {
+        toast.info('수동 편집 해제', {
+          description: '블록이 변경되어 자동 생성 코드로 되돌렸습니다.',
+          duration: 2400,
+        });
+      }
+    }
     emitCountRef.current += 1;
     // First emit is the initial workspace load — don't mark as unsaved.
     if (emitCountRef.current > 1) {
@@ -233,7 +252,7 @@ export default function Page() {
         workspaceJson: json,
         savedAt: new Date().toISOString(),
         wiringLayout,
-        editedPython,
+        editedPython: null, // no longer persisted — blocks are the source of truth
         modules: getModules(),
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
@@ -264,7 +283,9 @@ export default function Page() {
     wsRef.current.loadTemplate(saved.workspaceJson);
     setActiveTemplateId(saved.templateId);
     if (saved.wiringLayout) setWiringLayout(saved.wiringLayout);
-    if (saved.editedPython !== undefined) setEditedPython(saved.editedPython);
+    // NOTE: intentionally do NOT restore editedPython. A persisted manual
+    // override used to freeze the Code panel on reload ("code doesn't change").
+    // The Edit→Apply override is now a within-session convenience only.
     emitCountRef.current = 0;
     setUnsaved(false);
     setLastChangeAt(saved.savedAt);
@@ -347,6 +368,7 @@ export default function Page() {
         onPickTemplate={handlePickTemplate}
         onPickTarget={handlePickTarget}
         onHelp={() => setWelcomeOpen(true)}
+        onGuide={() => setGuideOpen(true)}
         onPickTheme={setThemeMode}
       />
 
@@ -427,6 +449,8 @@ export default function Page() {
         onOpenChange={dismissWelcome}
         onTryDemo={handleRun}
       />
+
+      <GuideDialog open={guideOpen} onOpenChange={setGuideOpen} />
 
       <ModuleDialog
         open={moduleDialogOpen}
