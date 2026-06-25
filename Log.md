@@ -875,3 +875,12 @@ pty 시리얼 루프백, selftest 전체 PASS. 데모 실행 시 4/4 PASS.
 
 파일: `docs/SETUP.md`(신규), `docs/DEVELOPER_GUIDE.md`(신규), `components/guide-dialog.tsx`(신규),
 `components/top-bar.tsx`(Guide 버튼), `app/page.tsx`(GuideDialog 연결)
+
+## 48. 루트 README 갱신 (환경 세팅 레포 반영)
+
+기존 README는 스타터킷 잔재(ZIP 해제·Claude Code 빌드·삭제된 `rpi-*` 디바이스)라 팀원 실행 시 혼란.
+→ GitHub 첫 화면에서 바로 보이도록 새로 작성: 빠른 시작(`git clone → npm install → npm run dev`,
+Node 20+git만 필요·외부 DB/백엔드 없음), `docs/SETUP.md`·`docs/DEVELOPER_GUIDE.md`·`sdk/README.md`
+링크 표, NI 전용 타겟·모듈·TDMS·인터페이스/BIT 최신 사실 반영.
+
+파일: `README.md`
